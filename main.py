@@ -19,18 +19,14 @@ scans = get_images(scans_folder)
 
 
 def similarities(imgs1, imgs2):
-    df = pd.DataFrame(index=list2, columns=list1)
+    df = pd.DataFrame(index=[img.name for img in imgs1], columns=[img.name for img in imgs2])
 
-    # # Werte berechnen und eintragen
-    # for row in list2:
-    #     for col in list1:
-    #         df.loc[row, col] = calculate_value(row, col)
-    for vMRT in vMRTs:
-        for scan in scans:
-            sim = image_similarity(scan, vMRT)
-            df.loc[vMRTs, scans] = sim
-            # print('\n     ('+scan.name+' <-> '+vMRT.name+')')
-            # print(f"Cosine Similarity: {sim:.4f}")
-            print(df)
+    for img1 in imgs1:
+        for img2 in imgs2:
+            sim = image_similarity(img1, img2)
+            df.loc[img1.name, img2.name] = sim
+    
+    return df
 
-
+df = similarities(scans, vMRTs)
+print(df)
