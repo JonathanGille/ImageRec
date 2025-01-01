@@ -1,42 +1,36 @@
-import timm
-import torch
-from PIL import Image
-from torchvision import transforms
-import torch.nn.functional as functional
+import os
 
-# PATHS
-front_path = "front_test.png" 
-back_path = "back_test.png"
-side_path = "side_test.png"
+from similarity_search import image_similarity, get_images
 
+import pandas as pd
 
-# load EfficientNet-B0 Modell mit timm 
-model = timm.create_model('efficientnet_b0', pretrained=True)
-model.eval() 
+scans_folder = os.path.join('scans','parkhaus_melaten', '32')
+vMRTs_folder = os.path.join('vMRTs','parkhaus_melaten_v1')
 
-transform = transforms.Compose([
-    transforms.Resize(224),  # EffizientNet erwartet 224x224 pixel als eingabe
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+# def get_images(folder):
+#     dirlist = os.listdir(folder)
+#     images = [os.path.join(folder,img) for img in dirlist]
+#     image_names = [img[:-4] for img in dirlist]
 
-def generate_embedding(image_path):
-    image = Image.open(image_path).convert("RGB")  
-    input_tensor = transform(image).unsqueeze(0)  # Bild transformieren und Batch-Dimension hinzufügen
-    with torch.no_grad():
-        features = model.forward_features(input_tensor)  # Feature-Map extrahieren
-        embedding = torch.mean(features, dim=[2, 3])  # Global Average Pooling 
-    return embedding
+#     return (images, image_names)
 
-front_e = generate_embedding(front_path)
-back_e = generate_embedding(back_path)
-side_e = generate_embedding(side_path)
+vMRTs = get_images(vMRTs_folder)
+scans = get_images(scans_folder)
 
 
-cs_ff = functional.cosine_similarity(front_e, front_e).item()
-cs_fb = functional.cosine_similarity(front_e, back_e).item()
-cs_fs = functional.cosine_similarity(front_e, side_e).item()
-print(f"Cosine Similarity zwischen (front/front): {cs_ff:.4f}")
-print(f"Cosine Similarity zwischen (front/back): {cs_fb:.4f}")
-print(f"Cosine Similarity zwischen (front/side): {cs_fs:.4f}")
+def similarities(imgs1, imgs2):
+    df = pd.DataFrame(index=list2, columns=list1)
+
+    # # Werte berechnen und eintragen
+    # for row in list2:
+    #     for col in list1:
+    #         df.loc[row, col] = calculate_value(row, col)
+    for vMRT in vMRTs:
+        for scan in scans:
+            sim = image_similarity(scan, vMRT)
+            df.loc[vMRTs, scans] = sim
+            # print('\n     ('+scan.name+' <-> '+vMRT.name+')')
+            # print(f"Cosine Similarity: {sim:.4f}")
+            print(df)
+
+
