@@ -5,9 +5,26 @@ from torchvision import transforms
 import torch.nn.functional as functional
 
 def image_similarity(img1, img2, model='efficientnet_b0'):
-    # load EfficientNet-B0 Modell mit timm 
-    model = timm.create_model('efficientnet_b0', pretrained=True)
-    model.eval() 
+    timm_models = [
+        'efficientnet_b0',
+        'efficientnet_b1',
+        'swin_base_patch4_window7_224',
+        'convnext_base',
+        'regnetx_400mf',
+        'resnet50',
+        'vgg19',
+    ]
+
+    tensorflow_models = [
+        'sketchrnn_model###'
+    ]
+
+    if model in timm_models:
+        model = timm.create_model('efficientnet_b0', pretrained=True)
+        model.eval() 
+    else:
+        print('     ### invalid modelname ###')
+        return None
 
     transform = transforms.Compose([
         transforms.Resize(224),  # EffizientNet erwartet 224x224 pixel als eingabe
