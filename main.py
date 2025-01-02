@@ -18,7 +18,7 @@ vMRTs = get_images(vMRTs_folder)
 scans = get_images(scans_folder)
 
 
-def similarities(imgs1, imgs2):
+def similarity_matrix(imgs1, imgs2):
     df = pd.DataFrame(index=[img.name for img in imgs1], columns=[img.name for img in imgs2])
 
     for img1 in imgs1:
@@ -28,5 +28,5 @@ def similarities(imgs1, imgs2):
     
     return df
 
-df = similarities(scans, vMRTs)
+df = similarity_matrix(scans, vMRTs)
 print(df)
