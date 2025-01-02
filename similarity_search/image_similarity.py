@@ -4,7 +4,7 @@ from PIL import Image
 from torchvision import transforms
 import torch.nn.functional as functional
 
-def image_similarity(img1, img2, model='efficientnet_b0'):
+def image_similarity(img1, img2, model_name='efficientnet_b0'):
     timm_models = [
         'efficientnet_b0',
         'efficientnet_b1',
@@ -19,8 +19,8 @@ def image_similarity(img1, img2, model='efficientnet_b0'):
         'sketchrnn_model###'
     ]
 
-    if model in timm_models:
-        model = timm.create_model('efficientnet_b0', pretrained=True)
+    if model_name in timm_models:
+        model = timm.create_model(model_name, pretrained=True)
         model.eval() 
     else:
         print('     ### invalid modelname ###')
