@@ -28,7 +28,7 @@ def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=F
 
     return df
 
-df = similarity_matrix(scans, vMRTs[0:2], model_name='convnext_small', print_result=True)
+df = similarity_matrix(scans, vMRTs[0:2], model_name='convnext_large', print_result=True)
 
 
 
