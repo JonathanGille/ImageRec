@@ -8,6 +8,7 @@ def image_similarity(img1, img2, model_name='efficientnet_b0'):
     timm_models = [
         'efficientnet_b0',
         'efficientnet_b1',
+        'efficientnet_b2',
         'swin_base_patch4_window7_224',
         'convnext_base',
         'regnetx_400mf',
