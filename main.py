@@ -1,5 +1,6 @@
 import os
 import time
+import timm
 
 from similarity_search import image_similarity, get_images
 
@@ -27,7 +28,12 @@ def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=F
 
     return df
 
-df = similarity_matrix(scans, vMRTs[0:2], model_name='regnetx_400mf', print_result=True)
+df = similarity_matrix(scans, vMRTs[0:2], model_name='convnext_small', print_result=True)
+
+
+
+
+
 
 ### available models on timm
 timm_models = [
@@ -36,7 +42,8 @@ timm_models = [
     'efficientnet_b2',
     'swin_base_patch4_window7_224',
     'convnext_base',
-    'regnetx_400mf',
+    'regnetx_040',
     'resnet50',
     'vgg19',
 ]
+# print([m for m in timm.list_models() if 'convnext' in m])

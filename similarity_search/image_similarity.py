@@ -11,21 +11,24 @@ def image_similarity(img1, img2, model_name='efficientnet_b0'):
         'efficientnet_b2',
         'swin_base_patch4_window7_224',
         'convnext_base',
-        'regnetx_400mf',
+        'regnetx_040',
         'resnet50',
         'vgg19',
     ]
 
     tensorflow_models = [
-        'sketchrnn_model###'
+        'sketchrnn_model'   # muss erst lokal gespeichert (H5-Format) und separat geladen werden
     ]
 
-    if model_name in timm_models:
-        model = timm.create_model(model_name, pretrained=True)
-        model.eval() 
-    else:
-        print('     ### invalid modelname ###')
-        return None
+    # if model_name in timm_models:
+    #     model = timm.create_model(model_name, pretrained=True)
+    #     model.eval() 
+    # else:
+    #     print('     ### invalid modelname ###')
+    #     return None
+
+    model = timm.create_model(model_name, pretrained=True)
+    model.eval() 
 
     transform = transforms.Compose([
         transforms.Resize(224),  # EffizientNet erwartet 224x224 pixel als eingabe
