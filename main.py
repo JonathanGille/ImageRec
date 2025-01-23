@@ -67,6 +67,33 @@ def visualize_results(df, label_df, show=True, save_imgs_to=None):
         else:
             plt.clf()
 
+def visualize_in_one_plot(df, label_df, show=True, save_imgs_to=None):
+    for i in range(len(df.columns.to_list())):
+        # nach den labels farblich markieren welche tatsächlich similar sind
+        colors = ['g' if label == 1 else 'r' for label in label_df.iloc[:,i]]
+        similarities = df.iloc[:, i]
+        indicies = df.index.to_list()
+
+        # nach absteigenden werten sortieren
+        sorted_data = sorted(zip(similarities, colors, indicies), reverse=True)
+        sorted_similarities, sorted_colors, sorted_indicies = zip(*sorted_data)
+
+        # plt.scatter(sorted_indicies, sorted_similarities, c=sorted_colors)
+        plt.plot(sorted_indicies, sorted_similarities, marker = '.', markersize = 10, c=sorted_colors)
+
+        plt.xlabel('scans')
+        #  beschriftung x-achse rotieren für lesbarkeit
+        plt.xticks(rotation=30, ha='right')
+        plt.ylabel('vMRT: ' + df.columns[i])
+
+        plt.tight_layout()
+
+        if save_imgs_to != None:
+            plt.savefig(os.path.join(save_imgs_to, df.columns[i]+'.png'), format='png')
+        if show:
+            plt.show()
+        else:
+            plt.clf()
 
 def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=False, label_df=None):
     start_time = time.time()
@@ -107,16 +134,16 @@ timm_models = [
     'vgg19',
 ]
 
-for _model in timm_models:
-    df = similarity_matrix(scans, vMRTs, model_name=_model, print_result=True)
-    df_dir = os.path.join('results', _model)
-    if not os.path.exists(df_dir):
-        os.mkdir(df_dir)
-    save_path = os.path.join(df_dir, 'df.csv')
-    save_df_to_csv(df,save_path, index=True)
-    visualize_results(df, df_label, save_imgs_to=df_dir, show=False)
+# for _model in timm_models:
+#     df = similarity_matrix(scans, vMRTs, model_name=_model, print_result=True)
+#     df_dir = os.path.join('results', _model)
+#     if not os.path.exists(df_dir):
+#         os.mkdir(df_dir)
+#     save_path = os.path.join(df_dir, 'df.csv')
+#     save_df_to_csv(df,save_path, index=True)
+#     visualize_results(df, df_label, save_imgs_to=df_dir, show=False)
 
-# print([m for m in timm.list_models() if 'convnext' in m])
-# df_dir = os.path.join('results', 'efficientnet_b0')
-# df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
-# visualize_results(df, df_label, save_imgs_to=df_dir, show=False)
+print([m for m in timm.list_models() if 'convnext' in m])
+df_dir = os.path.join('results', 'efficientnet_b0')
+df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
+visualize_results(df, df_label, save_imgs_to=None, show=True)
