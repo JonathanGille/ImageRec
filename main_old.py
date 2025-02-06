@@ -4,54 +4,33 @@ import timm
 
 from similarity_search import image_similarity, get_images
 from utils import save_df_to_csv, load_df_from_csv, scatter
-from labelling import labels
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
-wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped']
-# indexing for labelled DFs
-# label = {
-#     'Complicated': -1,
-#     'None': 0,
-#     'Widerlager_West': 1, 
-#     'Widerlager_Ost': 2,
-#     'Deck': 3,
-#     'Seitenansicht': 4,
-#     'Draufsicht': 5,
-# }
-# label = 1 -> Widerlager_West = front_clipped_1 -> [1,0,0,0,0]
+index_vMRT = ['atest_wl_vMRT', 'front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1']
 
-index_wireframes = {
-    'front_clipped_1': 1, 
-    'front_clipped_2': 3,
-    'front_clipped_3': 2, 
-    'side_unclipped_1': 4, 
-    'topview_unclipped': 5,
+scans_32_label = {
+    'aatest_wl_scan': [1,1,0,1,0],
+    'ANSICHT SEITE SÜD, M 1  100': [0,0,0,0,1],
+    'ANSICHT WIDERLAGER, M 1 50': [1,1,0,1,0],
+    'DETAIL  A , M 1 25': [0,0,0,0,0],
+    'DETAIL  B , M=1 25': [0,0,0,0,0],
+    'DRAUFSICHT AUF .... N': [0,0,0,0,0],
+    'KAPPE AUF DER STÜTZWAND': [0,0,0,0,0],
+    'LÄNGSSCHNITT A-A, M 1 100': [0,0,0,0,1],
+    'Raumfuge (RF) n. RiZ Fug 1 Bild 2': [0,0,0,0,0],
+    'REGELQUERSCHNITT': [0,0,1,0,0],
+    'SICHTFLÄCHENSCHALUNG   ÜBERBAU': [0,0,0,0,0],
+    'Sickerschacht': [0,0,0,0,0],
 }
 
-def get_label_df(label_dic):
-    matching_dic = {}
-    for scan, scan_label in label_dic.items():
-        n = len(wireframe_names)
-        vector = [0] * n
-        for wireframe, wf_label in index_wireframes.items():
-            if scan_label == wf_label:
-                correspondig_wf = wireframe
-            else:
-                correspondig_wf = 'None'
-            for k, wf_name in enumerate(wireframe_names):
-                if wf_name == correspondig_wf:
-                    vector[k] = 1
-        matching_dic[scan] = vector
-
-    return pd.DataFrame(matching_dic, index=wireframe_names).T
-
+df_label_32 = pd.DataFrame(scans_32_label, index=index_vMRT).T
 
 scans_folder = os.path.join('scans','parkhaus_melaten', '32')
-wireframes_folder = os.path.join('wireframes','parkhaus_melaten_v2')
+vMRTs_folder = os.path.join('vMRTs','parkhaus_melaten_v1')
 
-wireframes = get_images(wireframes_folder)
+vMRTs = get_images(vMRTs_folder)
 scans = get_images(scans_folder)
 
 # def label_check(lst, labels):
@@ -77,7 +56,7 @@ def visualize_results(df, label_df, show=True, save_imgs_to=None):
         plt.xlabel('scans')
         #  beschriftung x-achse rotieren für lesbarkeit
         plt.xticks(rotation=30, ha='right')
-        plt.ylabel('wireframe: ' + df.columns[i])
+        plt.ylabel('vMRT: ' + df.columns[i])
 
         plt.tight_layout()
 
@@ -105,7 +84,7 @@ def visualize_in_one_plot(df, label_df, show=True, save_imgs_to=None):
         plt.xlabel('scans')
         #  beschriftung x-achse rotieren für lesbarkeit
         plt.xticks(rotation=30, ha='right')
-        plt.ylabel('wireframe: ' + df.columns[i])
+        plt.ylabel('vMRT: ' + df.columns[i])
 
         plt.tight_layout()
 
@@ -138,7 +117,7 @@ def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=F
 
     return df
 
-# df = similarity_matrix(scans, wireframes, model_name='convnext_large', print_result=True, label_df=df_label_32)
+# df = similarity_matrix(scans, vMRTs, model_name='convnext_large', print_result=True, label_df=df_label_32)
 
 ### available models on timm
 timm_models = [
@@ -156,7 +135,7 @@ timm_models = [
 ]
 
 # for _model in timm_models:
-#     df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
+#     df = similarity_matrix(scans, vMRTs, model_name=_model, print_result=True)
 #     df_dir = os.path.join('results', _model)
 #     if not os.path.exists(df_dir):
 #         os.mkdir(df_dir)
@@ -164,21 +143,7 @@ timm_models = [
 #     save_df_to_csv(df,save_path, index=True)
 #     visualize_results(df, df_label_32, save_imgs_to=df_dir, show=False)
 
-
-for q in range(32,39):
-    _model = 'convnext_base'
-    label_df = get_label_df(labels(str(q)))
-
-    df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
-    df_dir = os.path.join('results', _model, q)
-    if not os.path.exists(df_dir):
-        os.mkdir(df_dir)
-    save_path = os.path.join(df_dir, 'df.csv')
-    save_df_to_csv(df,save_path, index=True)
-    visualize_results(df, label_df, save_imgs_to=df_dir, show=False)
-
-
-# print([m for m in timm.list_models() if 'convnext' in m])
-# df_dir = os.path.join('results', 'efficientnet_b0')
-# df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
-# visualize_results(df, label_df, save_imgs_to=None, show=True)
+print([m for m in timm.list_models() if 'convnext' in m])
+df_dir = os.path.join('results', 'efficientnet_b0')
+df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
+visualize_results(df, df_label_32, save_imgs_to=None, show=True)
