@@ -170,9 +170,8 @@ for q in range(32,39):
     label_df = get_label_df(labels(str(q)))
 
     df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
-    df_dir = os.path.join('results', _model, q)
-    if not os.path.exists(df_dir):
-        os.mkdir(df_dir)
+    df_dir = os.path.join('results', _model, str(q))
+    os.makedirs(df_dir, exist_ok=True)
     save_path = os.path.join(df_dir, 'df.csv')
     save_df_to_csv(df,save_path, index=True)
     visualize_results(df, label_df, save_imgs_to=df_dir, show=False)
