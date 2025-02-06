@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 index_vMRT = ['atest_wl_vMRT', 'front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1']
 
-scans = {
+scans_32_label = {
     'aatest_wl_scan': [1,1,0,1,0],
     'ANSICHT SEITE SÜD, M 1  100': [0,0,0,0,1],
     'ANSICHT WIDERLAGER, M 1 50': [1,1,0,1,0],
@@ -25,7 +25,7 @@ scans = {
     'Sickerschacht': [0,0,0,0,0],
 }
 
-df_label = pd.DataFrame(scans, index=index_vMRT).T
+df_label_32 = pd.DataFrame(scans_32_label, index=index_vMRT).T
 
 scans_folder = os.path.join('scans','parkhaus_melaten', '32')
 vMRTs_folder = os.path.join('vMRTs','parkhaus_melaten_v1')
@@ -117,7 +117,7 @@ def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=F
 
     return df
 
-# df = similarity_matrix(scans, vMRTs, model_name='convnext_large', print_result=True, label_df=df_label)
+# df = similarity_matrix(scans, vMRTs, model_name='convnext_large', print_result=True, label_df=df_label_32)
 
 ### available models on timm
 timm_models = [
@@ -141,9 +141,9 @@ timm_models = [
 #         os.mkdir(df_dir)
 #     save_path = os.path.join(df_dir, 'df.csv')
 #     save_df_to_csv(df,save_path, index=True)
-#     visualize_results(df, df_label, save_imgs_to=df_dir, show=False)
+#     visualize_results(df, df_label_32, save_imgs_to=df_dir, show=False)
 
 print([m for m in timm.list_models() if 'convnext' in m])
 df_dir = os.path.join('results', 'efficientnet_b0')
 df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
-visualize_results(df, df_label, save_imgs_to=None, show=True)
+visualize_results(df, df_label_32, save_imgs_to=None, show=True)

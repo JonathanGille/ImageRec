@@ -1,0 +1,4 @@
+Title: DETAIL  C , M=1 10
+
+*****Plankopf*****
+SCHALPLAN UNTERBAUTEN .

@@ -1,0 +1,4 @@
+Title: ZUSATZBEWEHRUNG M=1 10
+
+*****Plankopf*****
+SPANNBEWEHRUNG 922. ÜBERBAU bearb. jepr.
