@@ -2,12 +2,27 @@ import os
 import time
 import timm
 
-from similarity_search import image_similarity, get_images
+from similarity_search import image_similarity, get_images, get_embedding
 from utils import save_df_to_csv, load_df_from_csv, scatter
-from labelling import labels
+from labelling import get_labels
 
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+class Embedding():
+    def __init__(self):
+        self.embedding = None
+        self.label = None
+        self.proj_2d = None
+        self.name = None
+
+    def create_embedding(self, img, model_name='convnext_base'):
+        self.embedding = get_embedding(img, model_name=model_name).numpy()[0]
+
+    def project_2d():
+        pass
 
 wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped']
 
@@ -112,12 +127,15 @@ def get_label_df(label_dic):
     return pd.DataFrame(matching_dic, index=wireframe_names).T
 
 
-scans_folder = os.path.join('scans','parkhaus_melaten', '32')
+scans_folder = os.path.join('scans','parkhaus_melaten')
 wireframes_folder = os.path.join('wireframes','parkhaus_melaten_v2')
 wireframes_folder = os.path.join('wireframes','all')
 
 wireframes = get_images(wireframes_folder)
-scans = get_images(scans_folder)
+all_scans = []
+for i in range(32,49):
+    scans = scans + get_images(os.path.join(scans_folder,str(i)))
+print(len(scans))
 
 # def label_check(lst, labels):
 #     for i in range(lst):
@@ -221,8 +239,6 @@ timm_models = [
 ]
 
 
-
-
 def many_models_one_scan():
     for _model in timm_models:
         scan = '32'
@@ -237,7 +253,7 @@ def many_models_one_scan():
 def one_model_many_scans():
     for q in range(34,35):
         _model = 'convnext_base'
-        label_df = get_label_df(labels(str(q))).T
+        label_df = get_label_df(get_labels(str(q))).T
 
         df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True).T
         df_dir = os.path.join('results','west_ost_vMRT' ,_model, str(q))
@@ -253,5 +269,59 @@ def visualize_df_from_csv():
     df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
     visualize_results(df, get_label_df(scan), save_imgs_to=None, show=True)
 
+def plot_embeddings():
+    # farben bestimmen die zu jedem label gehören
+    colors = {
+        '0': 'black', '1': 'red', '2': 'blue', '3': 'green', '4': 'yellow', '5': 'purple', '6': 'orange'
+    }
+    pca = PCA(n_components=2)
+
+    label_table = index_wireframes
+    for i in range(32,49):
+        label_table.update(get_labels(str(i)))
+
+
+    images = wireframes + scans
+    emb_objects = []
+    embeddings = []
+    for im in images:
+        try:
+            if label_table[im.name] > 0:
+                emb = Embedding()
+                # embedding für iamge erstellen
+                emb.create_embedding(im)
+                # durch image-namen das zugehörige label finden
+                emb.label = label_table[im.name]
+                emb.name = im.name
+                emb_objects.append(emb)
+                embeddings.append(emb.embedding)
+        except:
+            print('#### ERROR probably key not found in label table: ', im.name)
+
+    print('Total number of embeddings labelled > 0:', len(embeddings))
+    # auf 2d-plane projizieren
+    emb2d = pca.fit_transform(embeddings)
+    
+    # embeddings nach farben(label) sortieren
+    sorted_embeddings_2d = {
+        '0': [], '1': [], '2': [], '3': [], '4': [], '5': [], '6': []
+    }
+    for i, emb_obj in enumerate(emb_objects):
+        sorted_embeddings_2d[str(emb_obj.label)].append(emb2d[i])
+    
+    # scattern nach labels -> farben
+    for label, embs in sorted_embeddings_2d.items():
+        embs = np.array(embs)
+        # falls es keine punkte in der liste gibt, wird ein fehler kommen der übersprungen wird, da leere liste unrelevant ist
+        try:
+            plt.scatter(embs[:, 0], embs[:, 1], c=colors[label], marker='o')
+        except:
+            pass
+        
+    # plt.grid(True)
+    plt.show()
+
+
 if __name__ == '__main__':
-    one_model_many_scans()
+    # one_model_many_scans()
+    plot_embeddings()

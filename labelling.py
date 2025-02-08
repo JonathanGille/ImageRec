@@ -4,7 +4,7 @@ import os
 scans_folder = os.path.join('scans','parkhaus_melaten')
 wireframes_folder = os.path.join('wireframes','all')
 
-def labels(key):
+def get_labels(key):
     label_assigment_dictionary = {
         'Complicated': -1,
         'None': 0,
@@ -297,8 +297,8 @@ def labels(key):
         '44': label_44,
         '45': label_45,
         '46': label_46,
-        'Anlage_8_Blatt_1': label_a8_b1,
-        'Anlage_8_Blatt_2': label_a8_b2,
+        '47': label_a8_b1, # Anlage 8 Blatt 1
+        '48': label_a8_b2, # Anlage 8 Blatt 2
     }
     return dic[key]
 

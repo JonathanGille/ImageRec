@@ -12,7 +12,7 @@ def get_images(folder):
     # image_paths = [os.path.join(folder,img) for img in dirlist]
     # image_names = [img[:-4] for img in dirlist]
 
-    images = [c_image(path=os.path.join(folder,img), name=img[:-4]) for img in dirlist]
+    images = [c_image(path=os.path.join(folder,img), name=img[:-4]) for img in dirlist if img.endswith('.png') or img.endswith('.jpg')]
 
     # images = [c_image(path) for path in image_paths]
     # return (images, image_names)
