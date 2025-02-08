@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped']
+
 # indexing for labelled DFs
 # label = {
 #     'Complicated': -1,
@@ -29,6 +30,35 @@ index_wireframes = {
     'side_unclipped_1': 4, 
     'topview_unclipped': 5,
 }
+
+wireframe_names = ['widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4']
+
+index_wireframes = {
+    'widerlager_west_1': 1, 
+    'widerlager_west_2': 1,
+    'widerlager_west_3': 1, 
+    'widerlager_west_4': 1, 
+}
+
+# all
+wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped','widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4','widerlager_ost_1', 'widerlager_ost_2', 'widerlager_ost_3', 'widerlager_ost_4']
+
+index_wireframes = {
+    'front_clipped_1': 1, 
+    'front_clipped_2': 3,
+    'front_clipped_3': 2, 
+    'side_unclipped_1': 4, 
+    'topview_unclipped': 5,
+    'widerlager_west_1': 1, 
+    'widerlager_west_2': 1,
+    'widerlager_west_3': 1, 
+    'widerlager_west_4': 1,
+    'widerlager_ost_1': 2, 
+    'widerlager_ost_2': 2,
+    'widerlager_ost_3': 2, 
+    'widerlager_ost_4': 2, 
+}
+
 
 def get_label_df(label_dic):
     matching_dic = {}
@@ -50,6 +80,7 @@ def get_label_df(label_dic):
 
 scans_folder = os.path.join('scans','parkhaus_melaten', '32')
 wireframes_folder = os.path.join('wireframes','parkhaus_melaten_v2')
+wireframes_folder = os.path.join('wireframes','west_ost_vMRT')
 
 wireframes = get_images(wireframes_folder)
 scans = get_images(scans_folder)
@@ -165,12 +196,12 @@ timm_models = [
 #     visualize_results(df, df_label_32, save_imgs_to=df_dir, show=False)
 
 
-for q in range(32,39):
+for q in range(34,35):
     _model = 'convnext_base'
-    label_df = get_label_df(labels(str(q)))
+    label_df = get_label_df(labels(str(q))).T
 
-    df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
-    df_dir = os.path.join('results', _model, str(q))
+    df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True).T
+    df_dir = os.path.join('results','west_ost_vMRT' ,_model, str(q))
     os.makedirs(df_dir, exist_ok=True)
     save_path = os.path.join(df_dir, 'df.csv')
     save_df_to_csv(df,save_path, index=True)
