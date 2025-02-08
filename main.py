@@ -12,53 +12,87 @@ import matplotlib.pyplot as plt
 wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped']
 
 # indexing for labelled DFs
-# label = {
-#     'Complicated': -1,
-#     'None': 0,
-#     'Widerlager_West': 1, 
-#     'Widerlager_Ost': 2,
-#     'Deck': 3,
-#     'Seitenansicht': 4,
-#     'Draufsicht': 5,
-# }
+label_assignment_dictionary = {
+    'Complicated': -1,
+    'None': 0,
+    'Widerlager_West': 1, 
+    'Widerlager_Ost': 2,
+    'Deck': 3,
+    'Seitenansicht': 4,
+    'Draufsicht': 5,
+}
 # label = 1 -> Widerlager_West = front_clipped_1 -> [1,0,0,0,0]
 
+# index_wireframes = {
+#     'front_clipped_1': 1, 
+#     'front_clipped_2': 3,
+#     'front_clipped_3': 2, 
+#     'side_unclipped_1': 4, 
+#     'topview_unclipped': 5,
+# }
+
+# wireframe_names = ['widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4']
+
+# index_wireframes = {
+#     'widerlager_west_1': 1, 
+#     'widerlager_west_2': 1,
+#     'widerlager_west_3': 1, 
+#     'widerlager_west_4': 1, 
+# }
+
+# # all
+# wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped','widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4','widerlager_ost_1', 'widerlager_ost_2', 'widerlager_ost_3', 'widerlager_ost_4']
+
+# index_wireframes = {
+#     'front_clipped_1': 1, 
+#     'front_clipped_2': 3,
+#     'front_clipped_3': 2, 
+#     'side_unclipped_1': 4, 
+#     'topview_unclipped': 5,
+#     'widerlager_west_1': 1, 
+#     'widerlager_west_2': 1,
+#     'widerlager_west_3': 1, 
+#     'widerlager_west_4': 1,
+#     'widerlager_ost_1': 2, 
+#     'widerlager_ost_2': 2,
+#     'widerlager_ost_3': 2, 
+#     'widerlager_ost_4': 2, 
+# }
+
+wireframe_names = [
+    "qs_w2e_east",
+    "qs_w2e_middle",
+    "qs_w2e_west",
+    "sideview",
+    "topview",
+    "wl_east_east",
+    "wl_east_north",
+    "wl_east_south",
+    "wl_east_top",
+    "wl_east_west",
+    "wl_west_east",
+    "wl_west_north",
+    "wl_west_south",
+    "wl_west_top",
+    "wl_west_west"
+]
 index_wireframes = {
-    'front_clipped_1': 1, 
-    'front_clipped_2': 3,
-    'front_clipped_3': 2, 
-    'side_unclipped_1': 4, 
-    'topview_unclipped': 5,
+    "qs_w2e_east": 2,
+    "qs_w2e_middle": 3,
+    "qs_w2e_west": 1,
+    "sideview": 4,
+    "topview": 5,
+    "wl_east_east": 2,
+    "wl_east_north": 2,
+    "wl_east_south": 2,
+    "wl_east_top": 2,
+    "wl_east_west": 2,
+    "wl_west_east": 1,
+    "wl_west_north": 1,
+    "wl_west_south": 1,
+    "wl_west_top": 1,
+    "wl_west_west": 1
 }
-
-wireframe_names = ['widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4']
-
-index_wireframes = {
-    'widerlager_west_1': 1, 
-    'widerlager_west_2': 1,
-    'widerlager_west_3': 1, 
-    'widerlager_west_4': 1, 
-}
-
-# all
-wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped','widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4','widerlager_ost_1', 'widerlager_ost_2', 'widerlager_ost_3', 'widerlager_ost_4']
-
-index_wireframes = {
-    'front_clipped_1': 1, 
-    'front_clipped_2': 3,
-    'front_clipped_3': 2, 
-    'side_unclipped_1': 4, 
-    'topview_unclipped': 5,
-    'widerlager_west_1': 1, 
-    'widerlager_west_2': 1,
-    'widerlager_west_3': 1, 
-    'widerlager_west_4': 1,
-    'widerlager_ost_1': 2, 
-    'widerlager_ost_2': 2,
-    'widerlager_ost_3': 2, 
-    'widerlager_ost_4': 2, 
-}
-
 
 def get_label_df(label_dic):
     matching_dic = {}
@@ -80,7 +114,7 @@ def get_label_df(label_dic):
 
 scans_folder = os.path.join('scans','parkhaus_melaten', '32')
 wireframes_folder = os.path.join('wireframes','parkhaus_melaten_v2')
-wireframes_folder = os.path.join('wireframes','west_ost_vMRT')
+wireframes_folder = os.path.join('wireframes','all')
 
 wireframes = get_images(wireframes_folder)
 scans = get_images(scans_folder)
@@ -186,29 +220,38 @@ timm_models = [
     'vgg19',
 ]
 
-# for _model in timm_models:
-#     df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
-#     df_dir = os.path.join('results', _model)
-#     if not os.path.exists(df_dir):
-#         os.mkdir(df_dir)
-#     save_path = os.path.join(df_dir, 'df.csv')
-#     save_df_to_csv(df,save_path, index=True)
-#     visualize_results(df, df_label_32, save_imgs_to=df_dir, show=False)
 
 
-for q in range(34,35):
-    _model = 'convnext_base'
-    label_df = get_label_df(labels(str(q))).T
 
-    df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True).T
-    df_dir = os.path.join('results','west_ost_vMRT' ,_model, str(q))
-    os.makedirs(df_dir, exist_ok=True)
-    save_path = os.path.join(df_dir, 'df.csv')
-    save_df_to_csv(df,save_path, index=True)
-    visualize_results(df, label_df, save_imgs_to=df_dir, show=False)
+def many_models_one_scan():
+    for _model in timm_models:
+        scan = '32'
+        df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
+        df_dir = os.path.join('results', _model)
+        if not os.path.exists(df_dir):
+            os.mkdir(df_dir)
+        save_path = os.path.join(df_dir, 'df.csv')
+        save_df_to_csv(df,save_path, index=True)
+        visualize_results(df, get_label_df(scan), save_imgs_to=df_dir, show=False)
 
+def one_model_many_scans():
+    for q in range(34,35):
+        _model = 'convnext_base'
+        label_df = get_label_df(labels(str(q))).T
 
-# print([m for m in timm.list_models() if 'convnext' in m])
-# df_dir = os.path.join('results', 'efficientnet_b0')
-# df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
-# visualize_results(df, label_df, save_imgs_to=None, show=True)
+        df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True).T
+        df_dir = os.path.join('results','west_ost_vMRT' ,_model, str(q))
+        os.makedirs(df_dir, exist_ok=True)
+        save_path = os.path.join(df_dir, 'df.csv')
+        save_df_to_csv(df,save_path, index=True)
+        visualize_results(df, label_df, save_imgs_to=df_dir, show=False)
+
+def visualize_df_from_csv():
+    scan = '32'
+    print([m for m in timm.list_models() if 'convnext' in m])
+    df_dir = os.path.join('results', 'efficientnet_b0')
+    df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
+    visualize_results(df, get_label_df(scan), save_imgs_to=None, show=True)
+
+if __name__ == '__main__':
+    one_model_many_scans()
