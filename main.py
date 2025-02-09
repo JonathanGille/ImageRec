@@ -21,76 +21,19 @@ class Embedding():
     def create_embedding(self, img, model_name='convnext_base'):
         self.embedding = get_embedding(img, model_name=model_name).numpy()[0]
 
-    def project_2d():
-        pass
 
-wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped']
 
 # indexing for labelled DFs
 label_assignment_dictionary = {
     'Complicated': -1,
     'None': 0,
-    'Widerlager_West': 1, 
+    'Widerlager_West': 1,
     'Widerlager_Ost': 2,
     'Deck': 3,
     'Seitenansicht': 4,
     'Draufsicht': 5,
 }
-# label = 1 -> Widerlager_West = front_clipped_1 -> [1,0,0,0,0]
 
-# index_wireframes = {
-#     'front_clipped_1': 1, 
-#     'front_clipped_2': 3,
-#     'front_clipped_3': 2, 
-#     'side_unclipped_1': 4, 
-#     'topview_unclipped': 5,
-# }
-
-# wireframe_names = ['widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4']
-
-# index_wireframes = {
-#     'widerlager_west_1': 1, 
-#     'widerlager_west_2': 1,
-#     'widerlager_west_3': 1, 
-#     'widerlager_west_4': 1, 
-# }
-
-# # all
-# wireframe_names = ['front_clipped_1', 'front_clipped_2', 'front_clipped_3', 'side_unclipped_1', 'topview_unclipped','widerlager_west_1', 'widerlager_west_2', 'widerlager_west_3', 'widerlager_west_4','widerlager_ost_1', 'widerlager_ost_2', 'widerlager_ost_3', 'widerlager_ost_4']
-
-# index_wireframes = {
-#     'front_clipped_1': 1, 
-#     'front_clipped_2': 3,
-#     'front_clipped_3': 2, 
-#     'side_unclipped_1': 4, 
-#     'topview_unclipped': 5,
-#     'widerlager_west_1': 1, 
-#     'widerlager_west_2': 1,
-#     'widerlager_west_3': 1, 
-#     'widerlager_west_4': 1,
-#     'widerlager_ost_1': 2, 
-#     'widerlager_ost_2': 2,
-#     'widerlager_ost_3': 2, 
-#     'widerlager_ost_4': 2, 
-# }
-
-wireframe_names = [
-    "qs_w2e_east",
-    "qs_w2e_middle",
-    "qs_w2e_west",
-    "sideview",
-    "topview",
-    "wl_east_east",
-    "wl_east_north",
-    "wl_east_south",
-    "wl_east_top",
-    "wl_east_west",
-    "wl_west_east",
-    "wl_west_north",
-    "wl_west_south",
-    "wl_west_top",
-    "wl_west_west"
-]
 index_wireframes = {
     "qs_w2e_east": 2,
     "qs_w2e_middle": 3,
@@ -109,8 +52,9 @@ index_wireframes = {
     "wl_west_west": 1
 }
 
-def get_label_df(label_dic):
+def get_label_df(label_dic, wireframes):
     matching_dic = {}
+    wireframe_names = [wf.name for wf in wireframes]
     for scan, scan_label in label_dic.items():
         n = len(wireframe_names)
         vector = [0] * n
@@ -124,27 +68,18 @@ def get_label_df(label_dic):
                     vector[k] = 1
         matching_dic[scan] = vector
 
-    return pd.DataFrame(matching_dic, index=wireframe_names).T
-
+    return pd.DataFrame(matching_dic, index=wireframe_names)
 
 scans_folder = os.path.join('scans','parkhaus_melaten')
-wireframes_folder = os.path.join('wireframes','parkhaus_melaten_v2')
 wireframes_folder = os.path.join('wireframes','all')
 
 wireframes = get_images(wireframes_folder)
 all_scans = []
 for i in range(32,49):
-    scans = scans + get_images(os.path.join(scans_folder,str(i)))
-print(len(scans))
+    all_scans = all_scans + get_images(os.path.join(scans_folder,str(i)))
 
-# def label_check(lst, labels):
-#     for i in range(lst):
-#         if labels[i] == 1:
-#             df.loc[img1.name, img2.name] = '<'+str(round(sim,3))+'>'
-#         else:
-#             df.loc[img1.name, img2.name] = str(round(sim,3))
 
-def visualize_results(df, label_df, show=True, save_imgs_to=None):
+def visualize_results(df, label_df, show=True, save_imgs_to=None, skip_all_zeros=False):
     for i in range(len(df.columns.to_list())):
         # nach den labels farblich markieren welche tatsächlich similar sind
         colors = ['green' if label == 1 else 'red' for label in label_df.iloc[:,i]]
@@ -154,6 +89,10 @@ def visualize_results(df, label_df, show=True, save_imgs_to=None):
         # nach absteigenden werten sortieren
         sorted_data = sorted(zip(similarities, colors, indicies), reverse=True)
         sorted_similarities, sorted_colors, sorted_indicies = zip(*sorted_data)
+
+        if skip_all_zeros:
+            if 'green' not in sorted_colors:
+                continue
 
         plt.scatter(sorted_indicies, sorted_similarities, c=sorted_colors)
 
@@ -201,18 +140,14 @@ def visualize_in_one_plot(df, label_df, show=True, save_imgs_to=None):
 
 def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=False, label_df=None):
     start_time = time.time()
+    # leere df mit imgs1 (wireframes) in zeilen und imgs2 (scans) in spalten erstellen
     df = pd.DataFrame(index=[img.name for img in imgs1], columns=[img.name for img in imgs2])
-
+    print('    - CALCULATING SIMILARITY MATRIX...')
     for img1 in imgs1:
         for img2 in imgs2:
+            # similarity wert für jeden scan x wireframe berechnen und an entsprechender location speichern
             sim = image_similarity(img1, img2, model_name=model_name)
-            if label_df is not None:
-                if label_df.loc[img1.name, img2.name] == 1:
-                    df.loc[img1.name, img2.name] = '<'+str(round(sim,3))+'>'
-                else:
-                    df.loc[img1.name, img2.name] = str(round(sim,3))        
-            else:
-                df.loc[img1.name, img2.name] = round(sim,3)
+            df.loc[img1.name, img2.name] = round(sim,3)
     
     if print_result:
         end_time = time.time()
@@ -221,7 +156,18 @@ def similarity_matrix(imgs1, imgs2, model_name='efficientnet_b0', print_result=F
 
     return df
 
-# df = similarity_matrix(scans, wireframes, model_name='convnext_large', print_result=True, label_df=df_label_32)
+def mark_labels_on_df(sim_df, label_df):
+    # label-df maske über similarity-df legen und 1 Werte mit brackets <> markieren
+    marked_df = sim_df.copy()
+    indices = marked_df.index.tolist()
+    columns = marked_df.columns.tolist()
+    for ind in indices:
+        for col in columns:
+            if label_df.loc[ind, col] == 1:
+                marked_df.loc[ind, col] = '<'+str(marked_df.loc[ind, col])+'>'
+            else:
+                marked_df.loc[ind, col] = str(marked_df.loc[ind, col])
+    return marked_df
 
 ### available models on timm
 timm_models = [
@@ -238,36 +184,49 @@ timm_models = [
     'vgg19',
 ]
 
-
-def many_models_one_scan():
-    for _model in timm_models:
-        scan = '32'
-        df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True)
-        df_dir = os.path.join('results', _model)
-        if not os.path.exists(df_dir):
-            os.mkdir(df_dir)
-        save_path = os.path.join(df_dir, 'df.csv')
-        save_df_to_csv(df,save_path, index=True)
-        visualize_results(df, get_label_df(scan), save_imgs_to=df_dir, show=False)
+def remove_irrelevant_scans(scans, label_dic, labels_to_remove=[0,-1]):
+    reduced_scans = []
+    reduced_lable_dic = {}
+    for i in range(len(scans)):
+        if label_dic[scans[i].name] not in labels_to_remove:
+            reduced_scans.append(scans[i])
+            reduced_lable_dic[scans[i].name] = label_dic[scans[i].name]
+    return reduced_scans, reduced_lable_dic
 
 def one_model_many_scans():
-    for q in range(34,35):
+    print('starting one_model_many_scans()...')
+    for q in range(41,47):
+        print('##### '+str(q)+' #####')
         _model = 'convnext_base'
-        label_df = get_label_df(get_labels(str(q))).T
 
-        df = similarity_matrix(scans, wireframes, model_name=_model, print_result=True).T
-        df_dir = os.path.join('results','west_ost_vMRT' ,_model, str(q))
+        # erstellte gelabelte dictionarys laden
+        labels_dic = get_labels(str(q))
+        scans = get_images(os.path.join(scans_folder,str(q)))
+
+        # aus den erstellten label-dictionary ein mask-dataframe erstellen mit 1 (tatsächlich similar) und 0 (tatsächlich dissimilar)  
+        label_df = get_label_df(labels_dic, wireframes)
+        print('(Label-Dataframe:)\n', label_df, '\n')
+
+        # similarity matrix für alle (scans)x(wireframes) berechnen
+        df = similarity_matrix(wireframes, scans, model_name=_model, print_result=True, label_df=None)
+        print('(Marked Similarity Matrix:)\n', mark_labels_on_df(df, label_df), '\n')
+
+        # speicherpfad erstellen
+        df_dir = os.path.join('results',_model, str(q))
         os.makedirs(df_dir, exist_ok=True)
         save_path = os.path.join(df_dir, 'df.csv')
         save_df_to_csv(df,save_path, index=True)
-        visualize_results(df, label_df, save_imgs_to=df_dir, show=False)
+
+        # aus df einen plot für jede spalte erstellen und speichern/anzeigen -> skip_all_zeros=True überspringt die Spalten ohne label != 0
+        visualize_results(df, label_df, save_imgs_to=df_dir, show=False, skip_all_zeros=True)
+        print('--> plots saved')
 
 def visualize_df_from_csv():
     scan = '32'
     print([m for m in timm.list_models() if 'convnext' in m])
     df_dir = os.path.join('results', 'efficientnet_b0')
     df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
-    visualize_results(df, get_label_df(scan), save_imgs_to=None, show=True)
+    # visualize_results(df, get_label_df(get_labels(scan)), save_imgs_to=None, show=True)
 
 def plot_embeddings():
     # farben bestimmen die zu jedem label gehören
@@ -281,7 +240,7 @@ def plot_embeddings():
         label_table.update(get_labels(str(i)))
 
 
-    images = wireframes + scans
+    images = wireframes + all_scans
     emb_objects = []
     embeddings = []
     for im in images:
@@ -321,7 +280,20 @@ def plot_embeddings():
     # plt.grid(True)
     plt.show()
 
+# chekc if the keys in labelling match the names of the scan images. the ones that are output do not match... 
+def check_keys():
+    for q in range(41,49):
+        print('#### '+str(q)+' ####')
+        labels_dic = get_labels(str(q))
+        scans = get_images(os.path.join(scans_folder,str(q)))
+        scan_names = [scan.name for scan in scans]
+        for key,value in labels_dic.items():
+            if key not in scan_names:
+                print(key)
+                
 
 if __name__ == '__main__':
     # one_model_many_scans()
-    plot_embeddings()
+    # plot_embeddings()
+    # check_keys()
+    pass

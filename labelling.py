@@ -6,7 +6,6 @@ wireframes_folder = os.path.join('wireframes','all')
 
 def get_labels(key):
     label_assigment_dictionary = {
-        'Complicated': -1,
         'None': 0,
         'Widerlager_West': 1, 
         'Widerlager_Ost': 2,
@@ -51,7 +50,7 @@ def get_labels(key):
         'DETAIL  C , M=1 10': 0,
         'DETAIL  C , M=1 10_1': 0,
         'DRAUFSICHT, M 1 50': 2,
-        'DRAUFSICHT, M 1 50_1': -1,
+        'DRAUFSICHT, M 1 50_1': 0,  # Complicated
         'DRAUFSICHT, M 1 50_2': 1,
         'FLÜGELSCHNITT, M 1 50': 0,
         'Lage  der Arbeits-und': 0,
@@ -72,7 +71,7 @@ def get_labels(key):
         'REGELQUERSCHNITT , M 1 25_1': 0,
         'REGELQUERSCHNITT , M 1 25_2': 3,
         'SICHTBARE RECHTWINKLIGE UND SPITZE KANTEN': 0,
-        'Übergangskonstrukion': 0,
+        'Übergangskonstrukion,': 0,
     }
         
     #df_label_35 = pd.DataFrame(label_35, index=label).T
@@ -110,7 +109,7 @@ def get_labels(key):
 
     label_38 = {
         'Achise   0': 1,
-        'ANSICHT FLÜGEL': -1,
+        'ANSICHT FLÜGEL': 0,    # Complicated
         'Biegerollendurchmess': 0,
         'DETAIL A , M=1 25': 0,
         'DIESE ZEICHNUNG STIMMT MIT DEN FREIGEGEBENC': 0,
@@ -152,7 +151,7 @@ def get_labels(key):
     'DRAUFSICHT. M 1 50_1': 0,
     'DRAUFSICHT. M 1 50_2': 2,
     'EINBAU DER LAGER (UNTERE ANKERPLATTE)': 0,
-    'Hauptmaßen des Entwurfes geprüft': 0,
+    'Hauptmaßen des Entwurfes geprüft ': 0,
     'Lager Nr .   50 1': 0,
     'Lager Nr .   50 1_1': 0,
     'Lager Nr .  50 2': 0,
@@ -165,10 +164,10 @@ def get_labels(key):
     'Anspannstelle und Festankerstet le vertausch! b.beiunstellund. Feb 2011. M': 0,
     'ANSPANNSTELLE, M 1 25': 0,
     'DIESE ZEICHNUNG STIMMT MIT DEN FREIGEGEBENEN': 0,
-    'Festanker  Fe': 0,
+    'Festanker  Fe ': 0,
     'Festankerstelle Seite West ,': 3,
     'FESTANKERSTELLE, M 1 25': 0,
-    'LÄNGSVORSPANNUNG': 0,
+    'LÄNGSVORSPANNUNG ': 0,
     'PASZE  IN CM GELTEN NUR FU': 5,
     'QUERSCHNITT IN PUNKT  0 , M 1 25': 3,
     'RUNDSTAHL - STÜCKLISTE': 0,
@@ -183,7 +182,7 @@ def get_labels(key):
     'DIESE ZEICHNUNG STIMMT MIT DEN FREIGEGEBENEN': 0,
     'DRAUFSICHT, M 1 50': 5,
     'ITLÄNGE ..': 0,
-    'Legende': 0,
+    'Legende   ': 0,
     'LÄNGSSCHNITT A-A, M 1 50': 4,
     'QUERSCHNITT B-B , M 1 25': 3,
     'RUNDSTAHL': 0,
@@ -199,7 +198,7 @@ def get_labels(key):
     label_43 = {
         'Abdeckblech 5 mm': 0,
         'Draufsicht Achse 50 M. 1 10': 0,
-        'EDV-Nr .': 0,
+        'EDV-Nr . ': 0,
         'EINSTELLMASS BEI': 0,
         'Hutmutter Wsf. 1.4301': 0,
         'Schnitt A-A': 3,
@@ -212,7 +211,7 @@ def get_labels(key):
     }
 
     label_44 = {
-        'Bauwerks-Nr .': 0,
+        'Bauwerks-Nr . ': 0,
         'Brückenquerrichtung --- +': 0,
         'Brückenquerrichtung --- +_1': 0,
         'Brückenquerrichtung --- +_2': 0,
@@ -222,11 +221,11 @@ def get_labels(key):
         'Montagehalterung (Prinzip) @': 0,
         'Sechskantmutter': 0,
         'Sechskantmutter_1': 0,
-        'Typenschild Pos. 100 (Prinzip)': 0,
+        'Typenschild Pos. 100 (Prinzip)  ': 0,
     }
 
     label_45 = {
-    'Auftraggeber': 0,
+    'Auftraggeber ': 0,
     'Brückenquerrichtung': 0,
     'Brückenquerrichtung_1': 0,
     'Fritz Meyer GmbH.': 0,
@@ -258,13 +257,13 @@ def get_labels(key):
     
     label_a8_b2 = {
     "Datum Zeichen": 0,
-    "Detail 1": 0,
-    "Detail 2 M. 1 25": 0,
-    "Detail 3 M. 1 50": 0,
-    "Detail 4": 0,
-    "Detail 5": 0,
-    "Detail 6": 0,
-    "Dieser Plan gilt nur in Verbindung mit Blatt-Nr . 1": 0,
+    "Detail  1 ": 0,
+    "Detail  2  M. 1 25": 0,
+    "Detail  3  M. 1 50": 0,
+    "Detail  4 ": 0,
+    "Detail  5 ": 0,
+    "Detail  6 ": 0,
+    "Dieser Plan gilt nur in Verbindung mit Blatt-Nr .  1": 0,
     "Endgültige Abmessungen nach statischen,": 0,
     "Hartschaumplatte": 0,
     "Schnitt B-B_M. 1 100": 0,
