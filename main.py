@@ -5,6 +5,7 @@ import timm
 from similarity_search import image_similarity, get_images, get_embedding
 from utils import save_df_to_csv, load_df_from_csv, scatter
 from labelling import get_labels
+from embeddings_manager import plot_embeddings
 
 import pandas as pd
 import numpy as np
@@ -228,7 +229,7 @@ def visualize_df_from_csv():
     df = load_df_from_csv(os.path.join(df_dir, 'df.csv'), index=True)
     # visualize_results(df, get_label_df(get_labels(scan)), save_imgs_to=None, show=True)
 
-def plot_embeddings():
+def plot_embeddings_custom():
     # farben bestimmen die zu jedem label gehören
     colors = {
         '0': 'black', '1': 'red', '2': 'blue', '3': 'green', '4': 'yellow', '5': 'purple', '6': 'orange'
@@ -291,9 +292,16 @@ def check_keys():
             if key not in scan_names:
                 print(key)
                 
+def test_plot_embeddings_func():
+    images = wireframes[0:5]
+    embeddings = [get_embedding(im) for im in images]
+    label = [0,1,2,0,4]
+    plot_embeddings(embeddings, label)
+
+
 
 if __name__ == '__main__':
     # one_model_many_scans()
-    # plot_embeddings()
+    # plot_embeddings_custom()
     # check_keys()
-    pass
+    test_plot_embeddings_func()

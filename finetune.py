@@ -1,6 +1,7 @@
 import os
 
 from similarity_search import image_similarity, get_images, get_embedding
+from embeddings_manager import plot_embeddings
 
 import timm
 import torch
@@ -39,6 +40,13 @@ def load_image(path):
     image = Image.open(path).convert("RGB")
     return transform(image).unsqueeze(0).to(device)  # Batch-Dimension + GPU
 
+def generate_nograd_embedding(image_tensor):
+    with torch.no_grad():
+        features = model.forward_features(image_tensor)
+        embedding = torch.mean(features, dim=[2, 3])  # Global Average Pooling
+    return embedding
+
+
 def generate_embedding(image_tensor):
     features = model.forward_features(image_tensor)
     embedding = torch.mean(features, dim=[2, 3])  # Global Average Pooling
@@ -76,37 +84,70 @@ criterion = ContrastiveLoss(margin=1.0)
 # print(f"Ähnlichkeit zwischen Bild1 & Bild2: {cosine_similarity_12}")
 # print(f"Ähnlichkeit zwischen Bild1 & Bild3: {cosine_similarity_13}\n")
 
+# def load_and_label(anchor_name, negatives_names, num_samples=80):
+#     img_folder = 'training_data'
+#     anchor_folder = os.path.join(img_folder,anchor_name)
+#     negative_folders = [os.path.join(img_folder, neg_name) for neg_name in negatives_names]
+
+#     anchor_images = get_images(anchor_folder)[0:num_samples]
+#     negatives_images = [get_images(neg_f) for neg_f in negative_folders[0:num_samples]]
+
+#     for img in houses:
+#         img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
+#         #img.emb = generate_embedding(img.img)
+#         img.label = 'house'
+
+#     for img in airplanes:
+#         img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
+#         #img.emb = generate_embedding(img.img)
+#         img.label = 'airplane'
+
+#     batch_length = len(houses)//2
+
+#     anchors = [img.img for img in houses[:batch_length]] # erste hälfte von houses sind die anchor bilder
+#     positives = [img.img for img in houses[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+#     negatives = [img.img for img in airplanes[:batch_length]] # airplanes sind die negativen (genauso lang wie die anchor bilder)
 
 
-def load_and_label():
+#     return anchors, positives, negatives
+
+def load_and_label(anchor_name, negatives_names, num_samples=80):
     img_folder = 'training_data'
-    houses_folder = os.path.join(img_folder,'house')
-    airplane_folder = os.path.join(img_folder,'airplane')
+    anchor_folder = os.path.join(img_folder,anchor_name)
+    negative_folders = [os.path.join(img_folder, neg_name) for neg_name in negatives_names]
 
-    houses = get_images(houses_folder)[0:6]
-    airplanes = get_images(airplane_folder)[0:6]
+    anchor_images = get_images(anchor_folder)[0:num_samples]
+    stack_of_negative_images = [get_images(neg_folder)[0:num_samples] for neg_folder in negative_folders]
 
-    for img in houses:
+    for img in anchor_images:
         img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
         #img.emb = generate_embedding(img.img)
-        img.label = 'house'
+        img.label = 'anchor'
+    for i in range(len(stack_of_negative_images)):
+        for img in stack_of_negative_images[i]:
+            img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
+            #img.emb = generate_embedding(img.img)
+            img.label = negatives_names[i]
 
-    for img in airplanes:
-        img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
-        #img.emb = generate_embedding(img.img)
-        img.label = 'airplane'
+    batch_length = len(anchor_images)//2
 
-    batch_length = len(houses)//2
-
-    anchors = [img.img for img in houses[:batch_length]] # erste hälfte von houses sind die anchor bilder
-    positives = [img.img for img in houses[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
-    negatives = [img.img for img in airplanes[:batch_length]] # airplanes sind die negativen (genauso lang wie die anchor bilder)
-
+    anchors = [img.img for img in anchor_images[:batch_length]] # erste hälfte von houses sind die anchor bilder
+    positives = [img.img for img in anchor_images[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+    negatives = [[img.img for img in stack[:batch_length]] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
 
     return anchors, positives, negatives
 
-anchors, positives, negatives = load_and_label()
 
+# Negatives ist jetzt ein Stack aus mehreren samples -> alles nachfolgende noch nicht drauf angepasst
+anchors, positives, negatives = load_and_label(anchor_name='house', negatives_names=['airplane', 'face'], num_samples=6)
+
+
+### MUSS NOCH ANGEPASST WERDEN -> da negatives jetzt ein stack ist
+all_embeddings_before = [generate_embedding(anch) for anch in anchors] + [generate_embedding(pos) for pos in positives] + [generate_embedding(neg) for neg in negatives]
+all_label = ['anchor' for i in range(len(anchors))] + ['positive' for i in range(len(positives))] + ['negative' for i in range(len(negatives))]
+plot_embeddings(all_embeddings_before, all_label)
+
+# print similarities
 for q in range(3):
     print('\nSimilaritys vorher:')
     cosine_similarity_12 = functional.cosine_similarity(generate_embedding(anchors[q]), generate_embedding(positives[q])).item()
@@ -114,7 +155,7 @@ for q in range(3):
     print(f"Ähnlichkeit zwischen anchor & positive: {cosine_similarity_12}")
     print(f"Ähnlichkeit zwischen anchor & negative: {cosine_similarity_13}\n")
 
-for epoch in range(5):  # Anzahl der Epochen
+for epoch in range(10):  # Anzahl der Epochen
     optimizer.zero_grad()
 
     batch_anchors = torch.stack([generate_embedding(img) for img in anchors])  # Anker-Bilder
@@ -142,3 +183,6 @@ for q in range(3):
     print(f"Ähnlichkeit zwischen anchor & positive: {cosine_similarity_12}")
     print(f"Ähnlichkeit zwischen anchor & negative: {cosine_similarity_13}\n")
 
+all_embeddings_after = [generate_embedding(anch) for anch in anchors] + [generate_embedding(pos) for pos in positives] + [generate_embedding(neg) for neg in negatives]
+all_label = ['anchor' for i in range(len(anchors))] + ['positive' for i in range(len(positives))] + ['negative' for i in range(len(negatives))]
+plot_embeddings(all_embeddings_after, all_label)
