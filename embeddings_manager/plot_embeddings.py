@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
@@ -14,7 +15,7 @@ label_assignment_dictionary = {
     'Draufsicht': 5,
 }
 
-def plot_embeddings(embeddings, label=['Unlabelled']):
+def plot_embeddings(embeddings, label=['Unlabelled'], save_to=None, show_plot=True):
     def match_colors_to_label(available_colors, existing_labels):
         label_color_dictionary = {}
         for n in range(len(existing_labels)):
@@ -30,7 +31,7 @@ def plot_embeddings(embeddings, label=['Unlabelled']):
         if l not in existing_labels:
             existing_labels.append(l)
 
-    available_colors = ['black', 'red', 'blue', 'green', 'purple', 'orange', 'yellow', 'pink', 'brown', 'gray', 'cyan', 'magenta']
+    available_colors = ['black', 'blue', 'red', 'green', 'purple', 'orange', 'yellow', 'pink', 'brown', 'gray', 'cyan', 'magenta']
     color_label_dic = match_colors_to_label(available_colors, existing_labels)
     
     
@@ -72,5 +73,8 @@ def plot_embeddings(embeddings, label=['Unlabelled']):
     # plt.legend(['None','Widerlager_West','Widerlager_Ost','Deck','Seitenansicht','Draufsicht'])  # Legende anzeigen
     plt.legend(existing_labels)  # Legende anzeigen
 
-    # plt.grid(True)
-    plt.show()
+    if save_to != None:
+        plt.savefig(save_to, format='png')
+    if show_plot:
+        plt.show()
+    plt.clf()

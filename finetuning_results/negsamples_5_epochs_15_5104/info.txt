@@ -1,0 +1,43 @@
+### SETTINGS ###
+anchor_drawing = house
+negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
+number of samples per drawing category = 3
+epochs = 15
+###
+
+Similaritys vorher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 0.5138337016105652
+Ähnlichkeit zwischen anchor & negative: 0.19092795252799988
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 0.6443252563476562
+Ähnlichkeit zwischen anchor & negative: 0.2936217188835144
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 0.5010371208190918
+Ähnlichkeit zwischen anchor & negative: 0.33917492628097534
+Epoch 1, Loss: 1.3075406551361084
+Epoch 2, Loss: 1.2154566049575806
+Epoch 3, Loss: 1.1163952350616455
+Epoch 4, Loss: 1.0443966388702393
+Epoch 5, Loss: 0.9978856444358826
+Epoch 6, Loss: 0.9617602825164795
+Epoch 7, Loss: 0.9174051880836487
+Epoch 8, Loss: 0.8756948709487915
+Epoch 9, Loss: 0.8557375073432922
+Epoch 10, Loss: 0.8416864275932312
+Epoch 11, Loss: 0.8147866129875183
+Epoch 12, Loss: 0.785478413105011
+Epoch 13, Loss: 0.7553828358650208
+Epoch 14, Loss: 0.7280166745185852
+Epoch 15, Loss: 0.7078240513801575
+
+Similaritys nachher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 0.7430237531661987
+Ähnlichkeit zwischen anchor & negative: 0.4563525319099426
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 0.7578386068344116
+Ähnlichkeit zwischen anchor & negative: 0.4847104251384735
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 0.7842586636543274
+Ähnlichkeit zwischen anchor & negative: 0.6443308591842651
