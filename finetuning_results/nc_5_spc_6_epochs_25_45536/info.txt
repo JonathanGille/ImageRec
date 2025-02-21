@@ -1,0 +1,55 @@
+### SETTINGS ###
+anchor_drawing = house
+negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
+number of samples per drawing category = 6
+epochs = 25
+margin = 50
+learning_rate = 0.0001###
+
+Similaritys vorher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 49.92757034301758
+Ähnlichkeit zwischen anchor & negative: 70.01513671875
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 49.54043960571289
+Ähnlichkeit zwischen anchor & negative: 66.1571044921875
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 52.602783203125
+Ähnlichkeit zwischen anchor & negative: 59.15707015991211
+
+Epoch 1, Loss: 1176.156005859375
+Epoch 2, Loss: 1176.0084228515625
+Epoch 3, Loss: 1173.610595703125
+Epoch 4, Loss: 1170.537841796875
+Epoch 5, Loss: 1168.52392578125
+Epoch 6, Loss: 1167.6907958984375
+Epoch 7, Loss: 1166.83837890625
+Epoch 8, Loss: 1165.9935302734375
+Epoch 9, Loss: 1165.239013671875
+Epoch 10, Loss: 1164.6875
+Epoch 11, Loss: 1164.40380859375
+Epoch 12, Loss: 1164.27978515625
+Epoch 13, Loss: 1164.0716552734375
+Epoch 14, Loss: 1163.7088623046875
+Epoch 15, Loss: 1163.3157958984375
+Epoch 16, Loss: 1163.028564453125
+Epoch 17, Loss: 1162.8486328125
+Epoch 18, Loss: 1162.7188720703125
+Epoch 19, Loss: 1162.590087890625
+Epoch 20, Loss: 1162.451416015625
+Epoch 21, Loss: 1162.3114013671875
+Epoch 22, Loss: 1162.183349609375
+Epoch 23, Loss: 1162.0679931640625
+Epoch 24, Loss: 1161.9464111328125
+Epoch 25, Loss: 1161.79638671875
+
+Similaritys nachher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 61.0117073059082
+Ähnlichkeit zwischen anchor & negative: 81.15045928955078
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 61.31279754638672
+Ähnlichkeit zwischen anchor & negative: 74.44231414794922
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 60.5866584777832
+Ähnlichkeit zwischen anchor & negative: 72.60108947753906

@@ -1,0 +1,40 @@
+### SETTINGS ###
+anchor_drawing = house
+negative_drawings = ['airplane', 'face']
+number of samples per drawing category = 6
+epochs = 10
+margin = 0.2
+learning_rate = 0.0001###
+
+Similaritys vorher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 49.92757034301758
+Ähnlichkeit zwischen anchor & negative: 70.01513671875
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 49.54043960571289
+Ähnlichkeit zwischen anchor & negative: 66.1571044921875
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 52.602783203125
+Ähnlichkeit zwischen anchor & negative: 59.15707015991211
+
+Epoch 1, Loss: 1.1736575365066528
+Epoch 2, Loss: 1.1072429418563843
+Epoch 3, Loss: 1.0559941530227661
+Epoch 4, Loss: 0.9630828499794006
+Epoch 5, Loss: 0.9167859554290771
+Epoch 6, Loss: 0.9004925489425659
+Epoch 7, Loss: 0.885130763053894
+Epoch 8, Loss: 0.8661934733390808
+Epoch 9, Loss: 0.8428797125816345
+Epoch 10, Loss: 0.8142489790916443
+
+Similaritys nachher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: tensor([38.2170], grad_fn=<LinalgVectorNormBackward0>)
+Ähnlichkeit zwischen anchor & negative: tensor([60.1929], grad_fn=<LinalgVectorNormBackward0>)
+sample_2:
+Ähnlichkeit zwischen anchor & positive: tensor([39.6595], grad_fn=<LinalgVectorNormBackward0>)
+Ähnlichkeit zwischen anchor & negative: tensor([55.7735], grad_fn=<LinalgVectorNormBackward0>)
+sample_3:
+Ähnlichkeit zwischen anchor & positive: tensor([39.8719], grad_fn=<LinalgVectorNormBackward0>)
+Ähnlichkeit zwischen anchor & negative: tensor([39.7889], grad_fn=<LinalgVectorNormBackward0>)

@@ -1,0 +1,40 @@
+### SETTINGS ###
+anchor_drawing = house
+negative_drawings = ['airplane', 'face']
+number of samples per drawing category = 6
+epochs = 10
+margin = 0.2
+learning_rate = 0.0001###
+
+Similaritys vorher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 0.5334537625312805
+Ähnlichkeit zwischen anchor & negative: 0.19092795252799988
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 0.610072135925293
+Ähnlichkeit zwischen anchor & negative: 0.2936217188835144
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 0.5114808082580566
+Ähnlichkeit zwischen anchor & negative: 0.33917492628097534
+
+Epoch 1, Loss: 1.1736575365066528
+Epoch 2, Loss: 1.1072429418563843
+Epoch 3, Loss: 1.0559941530227661
+Epoch 4, Loss: 0.9630828499794006
+Epoch 5, Loss: 0.9167859554290771
+Epoch 6, Loss: 0.9004925489425659
+Epoch 7, Loss: 0.885130763053894
+Epoch 8, Loss: 0.8661934733390808
+Epoch 9, Loss: 0.8428797125816345
+Epoch 10, Loss: 0.8142489790916443
+
+Similaritys nachher:
+sample_1:
+Ähnlichkeit zwischen anchor & positive: 0.7078978419303894
+Ähnlichkeit zwischen anchor & negative: 0.34902501106262207
+sample_2:
+Ähnlichkeit zwischen anchor & positive: 0.7091596126556396
+Ähnlichkeit zwischen anchor & negative: 0.4663389325141907
+sample_3:
+Ähnlichkeit zwischen anchor & positive: 0.678430438041687
+Ähnlichkeit zwischen anchor & negative: 0.6284583806991577
