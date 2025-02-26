@@ -1,0 +1,37 @@
+### SETTINGS ###
+epochs = 20
+margin = 120
+learning_rate = 0.001
+metric = l2-norm
+loss_function = Contrastive Loss
+###
+
+before:
+pos = 52.70738220214844, 57.11593246459961
+neg1 = 65.98355865478516, 60.75993728637695
+
+Epoch 1, Loss: 25905.66015625
+Epoch 2, Loss: 25644.0
+Epoch 3, Loss: 24718.11328125
+Epoch 4, Loss: 23843.576171875
+Epoch 5, Loss: 23295.0078125
+Epoch 6, Loss: 22847.76171875
+Epoch 7, Loss: 22133.51953125
+Epoch 8, Loss: 21552.830078125
+Epoch 9, Loss: 20920.3828125
+Epoch 10, Loss: 20388.150390625
+Epoch 11, Loss: 19784.314453125
+Epoch 12, Loss: 19321.42578125
+Epoch 13, Loss: 18787.955078125
+Epoch 14, Loss: 18378.5546875
+Epoch 15, Loss: 17861.818359375
+Epoch 16, Loss: 17365.521484375
+Epoch 17, Loss: 16943.50390625
+Epoch 18, Loss: 16595.62890625
+Epoch 19, Loss: 16349.6083984375
+Epoch 20, Loss: 16087.171875
+
+after:
+pos = 51.60725784301758, 43.06492614746094
+neg1 = 74.93618774414062, 80.10533142089844
+
