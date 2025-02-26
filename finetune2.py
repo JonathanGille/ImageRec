@@ -1,5 +1,6 @@
 import os
 import random
+import time
 
 from similarity_search import image_similarity, get_images, get_embedding
 from embeddings_manager import plot_embeddings
@@ -159,7 +160,7 @@ def test_image_batches():
     neg = [neg1, neg2]
     return anchor, pos, neg
 
-def main():
+def main_old():
     ### SETTINGS ###
     anchor_drawing = 'house'
     negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
@@ -257,38 +258,38 @@ def main():
     with open(os.path.join(results_folder, 'info.txt'), "w", encoding="utf-8") as file:
         file.write(info_string)
 
-def test():
+def main(testing=False):
     ### SETTINGS ###
     anchor_drawing = 'house'
     negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
-    # negative_drawings = ['airplane', 'face']
-    num_samples_per_category = 6
-    epochs = 20
+    negative_drawings = ['airplane', 'face', 'bathtub']
+    num_samples_per_category = 10
+    epochs = 100
     margin = 120
-    learning_rate = 0.001
+    learning_rate = 0.0005
     metric = 'l2-norm'
     loss_function = 'ContrastiveLoss'
     ###
 
-    elementwise_distance = True
+    if testing:
+        info_txt = f"""### SETTINGS ###\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
+        anchor, pos, neg =  test_image_batches()
+        results_folder = os.path.join('finetuning_tests', str(random.randint(1,100000)))
+        os.makedirs(results_folder)
+    else:
+        info_txt = f"""### SETTINGS ###\nanchor_drawing = {anchor_drawing}\nnegative_drawings = {negative_drawings}\nnumber of samples per drawing category = {num_samples_per_category}\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
+        anchor, pos, neg = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category)
+        results_folder = os.path.join('finetuning_results', loss_function+'_epochs='+str(epochs)+'_negcat='+str(len(negative_drawings))+'_samplespercat='+str(num_samples_per_category)+'_'+str(random.randint(1,100000)))
+        os.makedirs(results_folder)
 
-    info_txt = f"""### SETTINGS ###\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
 
+    # optimizer und loss function festlegen
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     if loss_function == 'ContrastiveLoss':
         criterion = ContrastiveLoss(margin=margin)
     elif loss_function == 'TripletLoss':
         criterion = TripletLoss(margin=margin)
 
-    # info_string = f"""### SETTINGS ###\nanchor_drawing = {anchor_drawing}\nnegative_drawings = {negative_drawings}\nnumber of samples per drawing category = {num_samples_per_category}\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}###\n\n"""
-
-    # # ordner mit random zahl bennen, damit nicht ausversehen was überschrieben wird. übergangslösung
-    results_folder = os.path.join('finetuning_tests', str(random.randint(1,100000)))
-    os.makedirs(results_folder)
-
-    ### Image-Batches laden
-    # anchor, pos, neg =  test_image_batches()
-    anchor, pos, neg = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category)
 
     ### INFO-LOG (vorher)
     dap1 = torch.norm(generate_embedding(anchor[0]) - generate_embedding(pos[0]), p=2)
@@ -299,14 +300,15 @@ def test():
     dan22 = torch.norm(generate_embedding(anchor[1]) - generate_embedding(neg[0][1]), p=2)
     print(dap1.item(), dap2.item(), dan11.item(), dan12.item(), dan21.item(), dan22.item())
 
-    mdap = get_multi_l2distance(anchor, pos, elementwise=elementwise_distance)
-    mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=elementwise_distance)
-    mdan2 = get_multi_l2distance(anchor, neg[1], elementwise=elementwise_distance)
+    mdap = get_multi_l2distance(anchor, pos, elementwise=True)
+    mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=True)
+    mdan2 = get_multi_l2distance(anchor, neg[1], elementwise=True)
     print(mdap.item(), mdan1.item(), mdan2.item())
     
     info_txt += 'before:\npos = '+str(dap1.item())+', '+str(dap2.item())+' \t(avg: '+str(mdap.item())+')\nneg1 = '+str(dan11.item())+', '+str(dan12.item())+' \t(avg: '+str(mdan1.item())+')\nneg2 = '+str(dan21.item())+', '+str(dan22.item())+' \t(avg: '+str(mdan2.item())+')\n\n'
- 
 
+    ### TRAINING
+    start_time = time.time()
     for epoch in range(epochs):
         if epoch % 5 == 0:
             generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False)
@@ -314,10 +316,8 @@ def test():
         optimizer.zero_grad()
 
         if loss_function == 'ContrastiveLoss':
-            ### funktioniert besser
             anchor_emb = [generate_embedding(img) for img in anchor]
             pos_emb = [generate_embedding(img) for img in pos]
-            # neg_emb = [[generate_embedding(img) for img in neg[0]], [generate_embedding(img) for img in neg[1]]]
             neg_emb = [[generate_embedding(img) for img in stack] for stack in neg]
 
             sum_of_losses = 0
@@ -336,8 +336,8 @@ def test():
 
         # NOCH NICHT FÜR STACK VON NEGATIVES AUSGELEGT -> neg[0] workaround nur für ersten stack
         elif loss_function == 'TripletLoss':
-            mdap = get_multi_l2distance(anchor, pos, elementwise=elementwise_distance)
-            mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=elementwise_distance)
+            mdap = get_multi_l2distance(anchor, pos, elementwise=True)
+            mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=True)
             loss = criterion(mdap, mdan1)
 
         loss.backward()
@@ -345,8 +345,8 @@ def test():
 
         print(f"Epoch {epoch+1}, Loss: {loss.item()}")
         info_txt += f"Epoch {epoch+1}, Loss: {loss.item()}\n"
-    
-
+    end_time = time.time()
+    info_txt += '\t -> training-time: ' + str(round((end_time-start_time)/60,2)) + ' min.\n'
     ### INFO-LOG (nachher)
     dap1 = torch.norm(generate_embedding(anchor[0]) - generate_embedding(pos[0]), p=2)
     dap2 = torch.norm(generate_embedding(anchor[1]) - generate_embedding(pos[1]), p=2)
@@ -356,18 +356,19 @@ def test():
     dan22 = torch.norm(generate_embedding(anchor[1]) - generate_embedding(neg[0][1]), p=2)
     print(dap1.item(), dap2.item(), dan11.item(), dan12.item(), dan21.item(), dan22.item())
     
-    mdap = get_multi_l2distance(anchor, pos, elementwise=elementwise_distance)
-    mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=elementwise_distance)
-    mdan2 = get_multi_l2distance(anchor, neg[1], elementwise=elementwise_distance)
+    mdap = get_multi_l2distance(anchor, pos, elementwise=True)
+    mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=True)
+    mdan2 = get_multi_l2distance(anchor, neg[1], elementwise=True)
     print(mdap.item(), mdan1.item(), mdan2.item())
     
     info_txt += '\nafter:\npos = '+str(dap1.item())+', '+str(dap2.item())+' \t(avg: '+str(mdap.item())+')\nneg1 = '+str(dan11.item())+', '+str(dan12.item())+' \t(avg: '+str(mdan1.item())+')\nneg2 = '+str(dan21.item())+', '+str(dan22.item())+' \t(avg: '+str(mdan2.item())+')\n\n'
  
+    # save last plot
     generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False)
 
+    # save infolog
     with open(os.path.join(results_folder, 'info.txt'), "w", encoding="utf-8") as file:
         file.write(info_txt)
 
 if __name__ == '__main__':
-    # main()
-    test()
+    main(testing=False)
