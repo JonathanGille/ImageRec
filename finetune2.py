@@ -94,7 +94,7 @@ class TripletLoss(nn.Module):
         return loss.mean()
     
 
-def load_and_label(anchor_name, negatives_names, num_samples=40):
+def load_and_label(anchor_name, negatives_names, num_samples=40, as_objects=False):
     img_folder = 'training_data'
     anchor_folder = os.path.join(img_folder,anchor_name)
     negative_folders = [os.path.join(img_folder, neg_name) for neg_name in negatives_names]
@@ -105,7 +105,7 @@ def load_and_label(anchor_name, negatives_names, num_samples=40):
     for img in anchor_images:
         img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
         #img.emb = generate_embedding(img.img)
-        img.label = 'anchor'
+        img.label = anchor_name
     for i in range(len(stack_of_negative_images)):
         for img in stack_of_negative_images[i]:
             img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
@@ -114,20 +114,35 @@ def load_and_label(anchor_name, negatives_names, num_samples=40):
 
     batch_length = len(anchor_images)//2
 
-    anchors = [img.img for img in anchor_images[:batch_length]] # erste hälfte von houses sind die anchor bilder
-    positives = [img.img for img in anchor_images[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
-    negatives = [[img.img for img in stack[:batch_length]] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
+    if as_objects:
+        anchors = [img for img in anchor_images[:batch_length]] # erste hälfte von houses sind die anchor bilder
+        positives = [img for img in anchor_images[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+        negatives = [[img for img in stack[:batch_length]] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
+    else:
+        anchors = [img.img for img in anchor_images[:batch_length]] # erste hälfte von houses sind die anchor bilder
+        positives = [img.img for img in anchor_images[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+        negatives = [[img.img for img in stack[:batch_length]] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
 
     return anchors, positives, negatives
 
-def generate_plot(anchors, positives, negatives, save_to=None, show_plot=True):
-    all_embeddings = [generate_embedding(anch) for anch in anchors] + [generate_embedding(pos) for pos in positives]
-    for stack in negatives:
-        all_embeddings = all_embeddings + [generate_embedding(neg) for neg in stack]
+def generate_plot(anchors, positives, negatives, save_to=None, show_plot=True, only_apn_label=True):
+    if only_apn_label:
+        all_embeddings = [generate_embedding(anch) for anch in anchors] + [generate_embedding(pos) for pos in positives]
+        for stack in negatives:
+            all_embeddings = all_embeddings + [generate_embedding(neg) for neg in stack]
+    else:
+        all_embeddings = [generate_embedding(anch.img) for anch in anchors] + [generate_embedding(pos.img) for pos in positives]
+        for stack in negatives:
+            all_embeddings = all_embeddings + [generate_embedding(neg.img) for neg in stack]        
 
-    all_label = ['anchor' for i in range(len(anchors))] + ['positive' for i in range(len(positives))]
-    for stack in negatives:
-        all_label = all_label + ['negative' for i in range(len(stack))]
+    if only_apn_label:
+        all_label = ['anchor' for i in range(len(anchors))] + ['positive' for i in range(len(positives))]
+        for stack in negatives:
+            all_label = all_label + ['negative' for i in range(len(stack))]
+    else:
+        all_label = [str(a.label)+' (anchor)' for a in anchors] + [str(p.label)+' (pos.)' for p in positives]
+        for stack in negatives:
+            all_label = all_label + [n.label+' (neg.)' for n in stack]
 
     plot_embeddings(all_embeddings, all_label, save_to=save_to, show_plot=show_plot)
 
@@ -262,11 +277,10 @@ def main(testing=False):
     ### SETTINGS ###
     anchor_drawing = 'house'
     negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
-    negative_drawings = ['airplane', 'face', 'bathtub']
     num_samples_per_category = 10
-    epochs = 100
+    epochs = 300
     margin = 120
-    learning_rate = 0.0005
+    learning_rate = 0.00001
     metric = 'l2-norm'
     loss_function = 'ContrastiveLoss'
     ###
@@ -274,11 +288,15 @@ def main(testing=False):
     if testing:
         info_txt = f"""### SETTINGS ###\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
         anchor, pos, neg =  test_image_batches()
+        anchor_objs, pos_objs, neg_objs = anchor, pos, neg
+        label_only_apn=True #(nur anchor, positive, negative als label in plots)
         results_folder = os.path.join('finetuning_tests', str(random.randint(1,100000)))
         os.makedirs(results_folder)
     else:
         info_txt = f"""### SETTINGS ###\nanchor_drawing = {anchor_drawing}\nnegative_drawings = {negative_drawings}\nnumber of samples per drawing category = {num_samples_per_category}\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
         anchor, pos, neg = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category)
+        anchor_objs, pos_objs, neg_objs = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category, as_objects=True)
+        label_only_apn = False #(in den plots werden alle kategorien farblich unterschieden und beschriftet)
         results_folder = os.path.join('finetuning_results', loss_function+'_epochs='+str(epochs)+'_negcat='+str(len(negative_drawings))+'_samplespercat='+str(num_samples_per_category)+'_'+str(random.randint(1,100000)))
         os.makedirs(results_folder)
 
@@ -311,7 +329,7 @@ def main(testing=False):
     start_time = time.time()
     for epoch in range(epochs):
         if epoch % 5 == 0:
-            generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False)
+            generate_plot(anchor_objs, pos_objs, neg_objs, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False, only_apn_label=label_only_apn)
 
         optimizer.zero_grad()
 
@@ -364,7 +382,7 @@ def main(testing=False):
     info_txt += '\nafter:\npos = '+str(dap1.item())+', '+str(dap2.item())+' \t(avg: '+str(mdap.item())+')\nneg1 = '+str(dan11.item())+', '+str(dan12.item())+' \t(avg: '+str(mdan1.item())+')\nneg2 = '+str(dan21.item())+', '+str(dan22.item())+' \t(avg: '+str(mdan2.item())+')\n\n'
  
     # save last plot
-    generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False)
+    generate_plot(anchor_objs, pos_objs, neg_objs, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False, only_apn_label=label_only_apn)
 
     # save infolog
     with open(os.path.join(results_folder, 'info.txt'), "w", encoding="utf-8") as file:

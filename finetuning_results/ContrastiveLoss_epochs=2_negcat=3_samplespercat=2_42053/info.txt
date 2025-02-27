@@ -1,0 +1,25 @@
+### SETTINGS ###
+anchor_drawing = house
+negative_drawings = ['airplane', 'face', 'bathtub']
+number of samples per drawing category = 2
+epochs = 2
+margin = 120
+learning_rate = 0.0005
+metric = l2-norm
+loss_function = ContrastiveLoss
+###
+
+before:
+pos = 54.82100296020508, 44.41493225097656 	(avg: 49.61796569824219)
+neg1 = 70.01513671875, 66.1571044921875 	(avg: 68.08612060546875)
+neg2 = 61.81850814819336, 66.1571044921875 	(avg: 62.6191520690918)
+
+Epoch 1, Loss: 3014.4794921875
+Epoch 2, Loss: 2987.840576171875
+	 -> training-time: 0.1 min.
+
+after:
+pos = 59.84366226196289, 50.739192962646484 	(avg: 55.29142761230469)
+neg1 = 76.1935043334961, 71.09664154052734 	(avg: 73.64507293701172)
+neg2 = 70.21807861328125, 71.09664154052734 	(avg: 70.73966979980469)
+

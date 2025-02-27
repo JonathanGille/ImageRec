@@ -31,7 +31,7 @@ def plot_embeddings(embeddings, label=['Unlabelled'], save_to=None, show_plot=Tr
         if l not in existing_labels:
             existing_labels.append(l)
 
-    available_colors = ['black', 'blue', 'red', 'green', 'purple', 'orange', 'yellow', 'pink', 'brown', 'gray', 'cyan', 'magenta']
+    available_colors = ['black', 'green', 'red', 'purple', 'orange', 'blue', 'yellow', 'pink', 'brown', 'gray', 'cyan', 'magenta']
     color_label_dic = match_colors_to_label(available_colors, existing_labels)
     
     
