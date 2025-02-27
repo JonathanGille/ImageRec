@@ -278,11 +278,13 @@ def main(testing=False):
     anchor_drawing = 'house'
     negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
     num_samples_per_category = 10
-    epochs = 300
+    epochs = 250
     margin = 120
-    learning_rate = 0.00001
+    learning_rate = 0.001
     metric = 'l2-norm'
     loss_function = 'ContrastiveLoss'
+    decay_step = 25
+    decay_rate = 0.005
     ###
 
     if testing:
@@ -330,6 +332,19 @@ def main(testing=False):
     for epoch in range(epochs):
         if epoch % 5 == 0:
             generate_plot(anchor_objs, pos_objs, neg_objs, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False, only_apn_label=label_only_apn)
+
+        if epoch == 50:
+            learning_rate = 0.001
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        if epoch == 100:
+            learning_rate = 0.0005
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        if epoch == 150:
+            learning_rate = 0.0001
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        if epoch == 200:
+            learning_rate = 0.00005
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate) 
 
         optimizer.zero_grad()
 
