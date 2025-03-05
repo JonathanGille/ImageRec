@@ -94,7 +94,7 @@ class TripletLoss(nn.Module):
         return loss.mean()
     
 
-def load_and_label(anchor_name, negatives_names, num_samples=40, as_objects=False):
+def sketchy_image_batches(anchor_name, negatives_names, num_samples=40, as_objects=False):
     img_folder = 'training_data'
     anchor_folder = os.path.join(img_folder,anchor_name)
     negative_folders = [os.path.join(img_folder, neg_name) for neg_name in negatives_names]
@@ -175,105 +175,40 @@ def test_image_batches():
     neg = [neg1, neg2]
     return anchor, pos, neg
 
-def main_old():
-    ### SETTINGS ###
-    anchor_drawing = 'house'
-    negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
-    negative_drawings = ['airplane', 'face']
-    num_samples_per_category = 6
-    epochs = 3
-    margin = 120
-    learning_rate = 0.001
-    metric = 'l2-norm'
-    ###
-
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # criterion = ContrastiveLoss(margin=margin)
-    criterion = TripletLoss(margin=margin)
-
-    info_string = f"""### SETTINGS ###\nanchor_drawing = {anchor_drawing}\nnegative_drawings = {negative_drawings}\nnumber of samples per drawing category = {num_samples_per_category}\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\n###\n\n"""
-
-    # ordner mit random zahl bennen, damit nicht ausversehen was überschrieben wird. übergangslösung
-    results_folder = os.path.join('finetuning_results', 'nc_'+str(len(negative_drawings))+'_spc_'+str(num_samples_per_category)+'_epochs_'+str(epochs)+'_'+str(random.randint(1,100000)))
-    os.makedirs(results_folder)
-
-    # Negatives ist jetzt ein Stack aus mehreren samples
-    anchors, positives, negatives = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category)
-
-
-    # print similarities
-    info_string += 'Similaritys vorher:\n'
-    for q in range(3):
-        info_string += 'sample_'+str(q+1)+':\n'
-        # cosine_similarity_12 = functional.cosine_similarity(generate_embedding(anchors[q]), generate_embedding(positives[q])).item()
-        # cosine_similarity_13 = functional.cosine_similarity(generate_embedding(anchors[q]), generate_embedding(negatives[0][q])).item()
-        distance_pos = torch.norm(generate_embedding(anchors[q]) - generate_embedding(positives[q]), p=2)
-        distance_neg = torch.norm(generate_embedding(anchors[q]) - generate_embedding(negatives[0][q]), p=2)
-        info_string += f"Ähnlichkeit zwischen anchor & positive: {distance_pos}\n"
-        info_string += f"Ähnlichkeit zwischen anchor & negative: {distance_neg}\n"
-    info_string += '\n'
-
-    batch_anchors = torch.stack([generate_embedding(img) for img in anchors])  # Anker-Bilder
-    batch_pos = torch.stack([generate_embedding(img) for img in positives])  # Positive Paare
-    batch_neg = torch.stack([torch.stack([generate_embedding(img) for img in stack]) for stack in negatives])
-    info_string += f"Ähnlichkeit batch anchor & positive: {get_distance(batch_anchors, batch_pos)}\n"
-    info_string += f"Ähnlichkeit batch anchor & negative: {get_distance(batch_anchors, batch_neg)}\n\n"
-    print(info_string)
+def bridge_sections_image_batches(anchor_name, num_samples=2, as_objects=False):
+    img_folder = 'bridge_sections_labelled'
     
+    anchor_folder = os.path.join(img_folder,anchor_name)
+    negative_parts = [p for p in os.listdir(img_folder) if p != anchor_name]
+    negative_folders = [os.path.join(img_folder, p) for p in negative_parts]
 
-    for epoch in range(epochs):  # Anzahl der Epochen
-        if epoch % 5 == 0:
-            generate_plot(anchors, positives, negatives, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False)
+    anchor_images = get_images(anchor_folder)[0:num_samples*2]
+    stack_of_negative_images = [get_images(neg_folder)[0:num_samples*2] for neg_folder in negative_folders]
 
-        optimizer.zero_grad()
+    for img in anchor_images:
+        img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
+        #img.emb = generate_embedding(img.img)
+        img.label = anchor_name
+    for i in range(len(stack_of_negative_images)):
+        for img in stack_of_negative_images[i]:
+            img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
+            #img.emb = generate_embedding(img.img)
+            img.label = negative_parts[i]
 
-        batch_anchors = torch.stack([generate_embedding(img) for img in anchors])  # Anker-Bilder
-        batch_pos = torch.stack([generate_embedding(img) for img in positives])  # Positive Paare
+    batch_length = len(anchor_images)//2
 
-        # batch_neg = torch.stack([generate_embedding(img) for img in negatives])  # Negative Paare
+    if as_objects:
+        anchors = [img for img in anchor_images[:batch_length]] # erste hälfte von houses sind die anchor bilder
+        positives = [img for img in anchor_images[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+        negatives = [[img for img in stack[:batch_length]] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
+    else:
+        anchors = [img.img for img in anchor_images[:batch_length]] # erste hälfte von houses sind die anchor bilder
+        positives = [img.img for img in anchor_images[batch_length:2*batch_length]] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+        negatives = [[img.img for img in stack[:batch_length]] for stack in stack_of_negative_images] # airplanes sind die negativen (genauso lang wie die anchor bilder)
 
-        # is a sstack of negative samples
-        batch_neg = torch.stack([torch.stack([generate_embedding(img) for img in stack]) for stack in negatives]) # Shape: (num_negatives, batch_size, embedding_dim)
+    return anchors, positives, negatives
 
-        labels_positive = torch.zeros(batch_anchors.shape[0], device=device).unsqueeze(1).unsqueeze(2).expand(-1, 1, 1024)  # 0 = Ähnliche Bilder
-        labels_negative = torch.ones(batch_anchors.shape[0], device=device).unsqueeze(1).unsqueeze(2).expand(-1, len(negatives), 1024)  # 1 = Unterschiedliche Bilder
-
-        # loss_pos = criterion(batch_anchors, batch_pos, labels_positive)
-        # # loss_neg = criterion(batch_anchors, batch_neg, labels_negative)
-        # # Berechne den Durchschnitt über alle negativen Paare
-        # loss_neg = torch.mean(torch.stack([criterion(batch_anchors, batch_neg[i], labels_negative[:, i]) for i in range(len(negatives))]))
-
-        # loss = (loss_pos + loss_neg) / 2  # Durchschnitt über alle Paare
-        loss = criterion(batch_anchors, batch_pos, batch_neg)
-        loss.backward()
-        optimizer.step()
-        
-
-        print(f"Epoch {epoch+1}, Loss: {loss.item()}")
-        info_string += f"Epoch {epoch+1}, Loss: {loss.item()}\n"
-
-    info_string += '\nSimilaritys nachher:\n'
-    for q in range(3):
-        info_string += 'sample_'+str(q+1)+':\n'
-        # cosine_similarity_12 = functional.cosine_similarity(generate_embedding(anchors[q]), generate_embedding(positives[q])).item()
-        # cosine_similarity_13 = functional.cosine_similarity(generate_embedding(anchors[q]), generate_embedding(negatives[0][q])).item()
-        distance_pos = torch.norm(generate_embedding(anchors[q]) - generate_embedding(positives[q]), p=2, dim=1).mean()
-        distance_neg = torch.norm(generate_embedding(anchors[q]) - generate_embedding(negatives[0][q]), p=2, dim=1).mean()
-        info_string += f"Ähnlichkeit zwischen anchor & positive: {distance_pos}\n"
-        info_string += f"Ähnlichkeit zwischen anchor & negative: {distance_neg}\n"
-
-    batch_anchors = torch.stack([generate_embedding(img) for img in anchors])  # Anker-Bilder
-    batch_pos = torch.stack([generate_embedding(img) for img in positives])  # Positive Paare
-    batch_neg = torch.stack([torch.stack([generate_embedding(img) for img in stack]) for stack in negatives])
-    info_string += f"\nÄhnlichkeit batch anchor & positive: {get_distance(batch_anchors, batch_pos)}\n"
-    info_string += f"Ähnlichkeit batch anchor & negative: {get_distance(batch_anchors, batch_neg)}\n"
-
-    generate_plot(anchors, positives, negatives, save_to=os.path.join(results_folder, 'epochs_'+str(epochs)+'.png'), show_plot=False)
-    
-    with open(os.path.join(results_folder, 'info.txt'), "w", encoding="utf-8") as file:
-        file.write(info_string)
-
-def main(testing=False):
+def main(use_case='sketchy'):
     ### SETTINGS ###
     anchor_drawing = 'house'
     negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
@@ -287,20 +222,25 @@ def main(testing=False):
     decay_rate = 0.005
     ###
 
-    if testing:
+    if use_case == 'testing':
         info_txt = f"""### SETTINGS ###\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
         anchor, pos, neg =  test_image_batches()
         anchor_objs, pos_objs, neg_objs = anchor, pos, neg
         label_only_apn=True #(nur anchor, positive, negative als label in plots)
         results_folder = os.path.join('finetuning_tests', str(random.randint(1,100000)))
         os.makedirs(results_folder)
-    else:
+    elif use_case == 'sketchy':
         info_txt = f"""### SETTINGS ###\nanchor_drawing = {anchor_drawing}\nnegative_drawings = {negative_drawings}\nnumber of samples per drawing category = {num_samples_per_category}\nepochs = {epochs}\nmargin = {margin}\nlearning_rate = {learning_rate}\nmetric = {metric}\nloss_function = {loss_function}\n###\n\n"""
-        anchor, pos, neg = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category)
-        anchor_objs, pos_objs, neg_objs = load_and_label(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category, as_objects=True)
+        anchor, pos, neg = sketchy_image_batches(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category)
+        anchor_objs, pos_objs, neg_objs = sketchy_image_batches(anchor_name=anchor_drawing, negatives_names=negative_drawings, num_samples=num_samples_per_category, as_objects=True)
         label_only_apn = False #(in den plots werden alle kategorien farblich unterschieden und beschriftet)
         results_folder = os.path.join('finetuning_results', loss_function+'_epochs='+str(epochs)+'_negcat='+str(len(negative_drawings))+'_samplespercat='+str(num_samples_per_category)+'_'+str(random.randint(1,100000)))
         os.makedirs(results_folder)
+    elif use_case == 'bridge_sections':
+        pass
+    else:
+        print('##### ERROR: Invalid use case !!! #####')
+        return
 
 
     # optimizer und loss function festlegen
@@ -404,4 +344,6 @@ def main(testing=False):
         file.write(info_txt)
 
 if __name__ == '__main__':
-    main(testing=False)
+    # main(use_case=False)
+    anchor, pos, neg = bridge_sections_image_batches(anchor_name='widerlager_west', num_samples=2, as_objects=False)
+    print(len(anchor), len(pos), len(neg), len(neg[0]))

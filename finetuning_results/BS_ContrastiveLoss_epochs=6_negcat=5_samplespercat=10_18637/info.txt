@@ -1,0 +1,18 @@
+### SETTINGS ###
+anchor_drawing = house
+negative_drawings = ['airplane', 'face', 'bathtub', 'cloud', 'mailbox']
+number of samples per drawing category = 10
+epochs = 6
+margin = 120
+learning_rate = 0.001
+metric = l2-norm
+loss_function = ContrastiveLoss
+###
+
+Epoch 1, Loss: 2415.69775390625
+Epoch 2, Loss: 2539.6513671875
+Epoch 3, Loss: 2430.1591796875
+Epoch 4, Loss: 2297.229248046875
+Epoch 5, Loss: 2216.5205078125
+Epoch 6, Loss: 2149.204345703125
+	 -> training-time: 0.91 min.

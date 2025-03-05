@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from PIL import Image
 
 class Embedding():
     def __init__(self):
@@ -281,6 +282,22 @@ def plot_embeddings_custom():
     # plt.grid(True)
     plt.show()
 
+def assemble_images():
+    label_table = index_wireframes
+    for i in range(32,49):
+        label_table.update(get_labels(str(i)))
+
+    images = wireframes + all_scans
+    img_label_dic = {}
+    for im in images:
+        for i in range(0,6):
+            if label_table[im.name] == i:
+                folder = 'bridge_sections_labelled'
+                label_folder = os.path.join(folder, str(i))
+                os.makedirs(label_folder, exist_ok=True)
+                im.img.save(os.path.join(label_folder, im.name+'.png'))
+                
+
 # chekc if the keys in labelling match the names of the scan images. the ones that are output do not match... 
 def check_keys():
     for q in range(41,49):
@@ -304,4 +321,5 @@ if __name__ == '__main__':
     # one_model_many_scans()
     # plot_embeddings_custom()
     # check_keys()
-    test_plot_embeddings_func()
+    # test_plot_embeddings_func()
+    assemble_images()

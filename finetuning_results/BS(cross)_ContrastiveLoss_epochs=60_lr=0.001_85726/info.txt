@@ -1,0 +1,103 @@
+### SETTINGS ###
+anchors = ['seitenansicht', 'draufsicht', 'deck']
+epochs = 60
+margin = 120
+learning_rate = 0.001
+metric = l2-norm
+loss_function = ContrastiveLoss
+###
+
+--> before
+(sideview):
+pos = (avg: 76.29907989501953)
+neg = (avg: 79.78179931640625)
+neg = (avg: 91.06143188476562)
+
+(topview):
+pos = (avg: 67.01470184326172)
+neg = (avg: 66.5360107421875)
+neg = (avg: 60.603912353515625)
+
+(qs_w2e_middle):
+pos = (avg: 76.8078842163086)
+neg = (avg: 89.88324737548828)
+neg = (avg: 79.59453582763672)
+
+Epoch 1, Loss: 3815.27294921875
+Epoch 2, Loss: 3773.22998046875
+Epoch 3, Loss: 3724.9580078125
+Epoch 4, Loss: 3709.419189453125
+Epoch 5, Loss: 3637.756591796875
+Epoch 6, Loss: 3528.869384765625
+Epoch 7, Loss: 3459.691162109375
+Epoch 8, Loss: 3413.746337890625
+Epoch 9, Loss: 3364.028564453125
+Epoch 10, Loss: 3317.86669921875
+Epoch 11, Loss: 3281.8544921875
+Epoch 12, Loss: 3247.193359375
+Epoch 13, Loss: 3211.39208984375
+Epoch 14, Loss: 3186.18310546875
+Epoch 15, Loss: 3178.49169921875
+Epoch 16, Loss: 3169.944580078125
+Epoch 17, Loss: 3144.4013671875
+Epoch 18, Loss: 3114.12255859375
+Epoch 19, Loss: 3087.53466796875
+Epoch 20, Loss: 3064.1484375
+Epoch 21, Loss: 3037.469482421875
+Epoch 22, Loss: 3009.108642578125
+Epoch 23, Loss: 2980.3876953125
+Epoch 24, Loss: 2952.229736328125
+Epoch 25, Loss: 2921.13330078125
+Epoch 26, Loss: 2886.44091796875
+Epoch 27, Loss: 2854.2080078125
+Epoch 28, Loss: 2826.103271484375
+Epoch 29, Loss: 2798.470703125
+Epoch 30, Loss: 2771.66259765625
+Epoch 31, Loss: 2742.993408203125
+Epoch 32, Loss: 2709.165283203125
+Epoch 33, Loss: 2673.080078125
+Epoch 34, Loss: 2636.72314453125
+Epoch 35, Loss: 2598.7978515625
+Epoch 36, Loss: 2561.88916015625
+Epoch 37, Loss: 2527.183837890625
+Epoch 38, Loss: 2494.4541015625
+Epoch 39, Loss: 2462.2880859375
+Epoch 40, Loss: 2430.328369140625
+Epoch 41, Loss: 2399.744384765625
+Epoch 42, Loss: 2370.583251953125
+Epoch 43, Loss: 2341.778076171875
+Epoch 44, Loss: 2314.347412109375
+Epoch 45, Loss: 2284.4775390625
+Epoch 46, Loss: 2258.889404296875
+Epoch 47, Loss: 2226.436279296875
+Epoch 48, Loss: 2205.79541015625
+Epoch 49, Loss: 2165.587890625
+Epoch 50, Loss: 2169.274658203125
+Epoch 51, Loss: 2126.661865234375
+Epoch 52, Loss: 2202.74267578125
+Epoch 53, Loss: 2062.97607421875
+Epoch 54, Loss: 2034.539306640625
+Epoch 55, Loss: 2021.6583251953125
+Epoch 56, Loss: 1976.04052734375
+Epoch 57, Loss: 1951.343505859375
+Epoch 58, Loss: 1917.3177490234375
+Epoch 59, Loss: 1956.897705078125
+Epoch 60, Loss: 1896.6856689453125
+	 -> training-time: 17.33 min.
+
+--> after
+(sideview):
+pos = (avg: 58.025020599365234)
+neg = (avg: 93.4218521118164)
+neg = (avg: 87.46260833740234)
+
+(topview):
+pos = (avg: 83.30925750732422)
+neg = (avg: 104.89120483398438)
+neg = (avg: 101.59688568115234)
+
+(qs_w2e_middle):
+pos = (avg: 44.604976654052734)
+neg = (avg: 77.6253433227539)
+neg = (avg: 80.11865997314453)
+
