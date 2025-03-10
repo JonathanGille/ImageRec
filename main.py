@@ -315,11 +315,9 @@ def test_plot_embeddings_func():
     label = [0,1,2,0,4]
     plot_embeddings(embeddings, label)
 
-
-
 if __name__ == '__main__':
     # one_model_many_scans()
     # plot_embeddings_custom()
     # check_keys()
     # test_plot_embeddings_func()
-    assemble_images()
+    # assemble_images()

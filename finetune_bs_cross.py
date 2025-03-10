@@ -12,6 +12,7 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 from PIL import Image
 import torch.nn.functional as functional
+import matplotlib.pyplot as plt
 
 # Modell laden
 model = timm.create_model('convnext_base', pretrained=True)
@@ -38,6 +39,12 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
+def load_images_of_folder(folder):
+    images = get_images(folder)
+    for img in images:
+        img.img = load_image(img.path)
+    return images
+
 def load_image(path):
     image = Image.open(path).convert("RGB")
     return transform(image).unsqueeze(0).to(device)  # Batch-Dimension + GPU
@@ -50,6 +57,11 @@ def generate_nograd_embedding(image_tensor):
 
 def generate_embedding(image_tensor):
     features = model.forward_features(image_tensor)
+    embedding = torch.mean(features, dim=[2, 3]).squeeze(0) # Global Average Pooling
+    return embedding
+
+def embedding(img, model):
+    features = model.forward_features(img)
     embedding = torch.mean(features, dim=[2, 3]).squeeze(0) # Global Average Pooling
     return embedding
 
@@ -131,8 +143,8 @@ def generate_plot(anchors, positives, negatives, save_to=None, show_plot=True, o
 
     plot_embeddings(all_embeddings, all_label, save_to=save_to, show_plot=show_plot)
 
-def get_distance(batch1, batch2):
-    return torch.norm(batch1 - batch2, p=2, dim=1).mean()
+def l2_distance(img1, img2):
+    return torch.norm(img1 - img2, p=2)
 
 def get_multi_l2distance(batch1, batch2, elementwise=True):  # expects to lists of images and gives back the normed distance between those two batches
     diff = torch.stack([generate_embedding(b1.img) for b1 in batch1]) - torch.stack([generate_embedding(b2.img) for b2 in batch2])   # shape t([2, 1024])
@@ -161,7 +173,7 @@ def test_image_batches():
     return anchor, pos, neg
 
 def bridge_sections_image_batches(anchor_name, ignore=None, as_objects=False):
-    img_folder = 'bridge_sections_seperated'
+    img_folder = 'bridge_sections_labelled'
     wireframes_folder = os.path.join(img_folder,'wireframes')
     scans_folder = os.path.join(img_folder,'scans')
     
@@ -204,9 +216,85 @@ def bridge_sections_image_batches(anchor_name, ignore=None, as_objects=False):
 
     return anchors, positives, negatives
 
-def main(use_case='sketchy', anchor_names=None, ignore=None):
+def load_and_test(model_name=None):
+    if model_name == None:
+        model_name = 'BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921'
+    loaded_model = timm.create_model('convnext_base', pretrained=True)
+    loaded_model.load_state_dict(torch.load(os.path.join('finetuned_models', model_name+'.pth'), weights_only=True))
+    # loaded_model = torch.load(os.path.join('finetuned_models', 'BS(cross)_ContrastiveLoss_epochs=2_lr=0.001_30451.pth'), weights_only=False)
+    img1 = load_image(os.path.join('bridge_sections_labelled', 'wireframes', 'deck', 'qs_w2e_middle.png'))
+    img2 = load_image(os.path.join('bridge_sections_labelled', 'scans', 'deck', 'ANSICHT WIDERLAGER .... M 1 25.png'))
+    img3 = load_image(os.path.join('bridge_sections_labelled', 'scans', 'seitenansicht', 'Achse  0.png'))
+    features = loaded_model.forward_features(img1)
+    emb1 = torch.mean(features, dim=[2, 3]).squeeze(0) # Global Average Pooling
+    features = loaded_model.forward_features(img2)
+    emb2 = torch.mean(features, dim=[2, 3]).squeeze(0) # Global Average Pooling
+    features = loaded_model.forward_features(img3)
+    emb3 = torch.mean(features, dim=[2, 3]).squeeze(0) # Global Average Pooling
+
+    d12 = torch.norm(emb1 - emb2, p=2)
+    d13 = torch.norm(emb1 - emb3, p=2)
+    print(d12.item())
+    print(d13.item())
+
+def load_model(model_name):
+    loaded_model = timm.create_model('convnext_base', pretrained=True)
+    loaded_model.load_state_dict(torch.load(os.path.join('finetuned_models', model_name+'.pth'), weights_only=True))
+    return loaded_model
+
+def bridge_sections_image_dictionarys(ignore=None):
+    img_folder = 'bridge_sections_labelled'
+    wireframes_folder = os.path.join(img_folder,'wireframes')
+    scans_folder = os.path.join(img_folder,'scans')
+
+    scans_dic = {}
+    for scan_type in os.listdir(scans_folder):
+        if scan_type in ignore:
+            continue
+        scans_dic[scan_type] = load_images_of_folder(os.path.join(scans_folder, scan_type))
+        for img in scans_dic[scan_type]:
+            img.label = scan_type
+
+    wireframes_dic = {}
+    for wireframe_type in os.listdir(scans_folder):
+        if wireframe_type in ignore:
+            continue
+        wireframes_dic[wireframe_type] = load_images_of_folder(os.path.join(wireframes_folder, wireframe_type))
+        for img in wireframes_dic[wireframe_type]:
+            img.label = wireframe_type
+
+    return wireframes_dic, scans_dic
+
+def plot_distances(model, show=True, save_imgs_to=None):
+    wireframes_dic, scans_dic = bridge_sections_image_dictionarys(ignore=['none'])
+    all_wireframes = []
+    for key, lst in wireframes_dic.items():
+        all_wireframes += lst
+
+    for key, scans in scans_dic.items():
+        for scan in scans:
+            colors = ['green' if wf.label == scan.label else 'red' for wf in all_wireframes]
+            wf_names = [wf.name for wf in all_wireframes]
+            distances = [l2_distance(embedding(scan.img, model), embedding(wireframe.img, model)).item() for wireframe in all_wireframes]
+            plt.scatter(wf_names, distances, c=colors)
+            plt.xlabel('wireframes')
+            #  beschriftung x-achse rotieren für lesbarkeit
+            plt.xticks(rotation=30, ha='right')
+            plt.ylabel('scan: '+scan.name)
+
+            plt.tight_layout()
+            if save_imgs_to != None:
+                save_folder = os.path.join(save_imgs_to, key)
+                os.makedirs(save_folder, exist_ok=True)
+                plt.savefig(os.path.join(save_folder, scan.name+'.png'), format='png')
+            if show:
+                plt.show()
+            else:
+                plt.clf()
+        
+def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
     ### SETTINGS ###
-    epochs = 60
+    epochs = 100
     margin = 120
     learning_rate = 0.001
     metric = 'l2-norm'
@@ -230,15 +318,15 @@ def main(use_case='sketchy', anchor_names=None, ignore=None):
         criterion = TripletLoss(margin=margin)
 
 
-    ### INFO-LOG (vorher)
-    info_txt += '--> before\n'
-    for anchor, pos, neg in apn_obj_batches:
-        mdap = get_multi_l2distance(anchor, pos, elementwise=True)
-        info_txt += '('+str(anchor[0].name)+'):\npos = (avg: '+str(mdap.item())+')\n'
-        for ne in neg:
-            mdan = get_multi_l2distance(anchor, ne, elementwise=True)
-            info_txt += 'neg = (avg: '+str(mdan.item())+')\n'
-        info_txt += '\n'
+    # ### INFO-LOG (vorher)
+    # info_txt += '--> before\n'
+    # for anchor, pos, neg in apn_obj_batches:
+    #     mdap = get_multi_l2distance(anchor, pos, elementwise=True)
+    #     info_txt += '('+str(anchor[0].name)+'):\npos = (avg: '+str(mdap.item())+')\n'
+    #     for ne in neg:
+    #         mdan = get_multi_l2distance(anchor, ne, elementwise=True)
+    #         info_txt += 'neg = (avg: '+str(mdan.item())+')\n'
+    #     info_txt += '\n'
     
     ### TRAINING
     start_time = time.time()
@@ -247,18 +335,18 @@ def main(use_case='sketchy', anchor_names=None, ignore=None):
             if epoch % 5 == 0:
                 generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'_'+anchor[0].name+'.png'), show_plot=False, only_apn_label=label_only_apn)
 
-            # if epoch == 50:
-            #     learning_rate = 0.001
-            #     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-            # if epoch == 100:
-            #     learning_rate = 0.0005
-            #     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-            # if epoch == 150:
-            #     learning_rate = 0.0001
-            #     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-            # if epoch == 200:
-            #     learning_rate = 0.00005
-            #     optimizer = optim.Adam(model.parameters(), lr=learning_rate) 
+            if epoch == 50:
+                learning_rate = 0.001
+                optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+            if epoch == 100:
+                learning_rate = 0.0005
+                optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+            if epoch == 150:
+                learning_rate = 0.0001
+                optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+            if epoch == 200:
+                learning_rate = 0.00005
+                optimizer = optim.Adam(model.parameters(), lr=learning_rate) 
 
             optimizer.zero_grad()
 
@@ -299,15 +387,15 @@ def main(use_case='sketchy', anchor_names=None, ignore=None):
     end_time = time.time()
     info_txt += '\t -> training-time: ' + str(round((end_time-start_time)/60,2)) + ' min.\n'
 
-    ### INFO-LOG (nachher)    
-    info_txt += '\n--> after\n'
-    for anchor, pos, neg in apn_obj_batches:
-        mdap = get_multi_l2distance(anchor, pos, elementwise=True)
-        info_txt += '('+str(anchor[0].name)+'):\npos = (avg: '+str(mdap.item())+')\n'
-        for ne in neg:
-            mdan = get_multi_l2distance(anchor, ne, elementwise=True)
-            info_txt += 'neg = (avg: '+str(mdan.item())+')\n'
-        info_txt += '\n'
+    # ### INFO-LOG (nachher)    
+    # info_txt += '\n--> after\n'
+    # for anchor, pos, neg in apn_obj_batches:
+    #     mdap = get_multi_l2distance(anchor, pos, elementwise=True)
+    #     info_txt += '('+str(anchor[0].name)+'):\npos = (avg: '+str(mdap.item())+')\n'
+    #     for ne in neg:
+    #         mdan = get_multi_l2distance(anchor, ne, elementwise=True)
+    #         info_txt += 'neg = (avg: '+str(mdan.item())+')\n'
+    #     info_txt += '\n'
 
     # # save last plot
     # generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False, only_apn_label=label_only_apn)
@@ -316,5 +404,16 @@ def main(use_case='sketchy', anchor_names=None, ignore=None):
     with open(os.path.join(results_folder, 'info.txt'), "w", encoding="utf-8") as file:
         file.write(info_txt)
 
+    # save model
+    if save:
+        model_save_path = 'finetuned_models'
+        custom_name = 'BS(cross)_'+loss_function+'_epochs='+str(epochs)+'_lr='+str(learning_rate)+'_'+str(random.randint(1,100000))
+        # torch.save(model, os.path.join(model_save_path, custom_name+'.pth'))
+        torch.save(model.state_dict(), os.path.join(model_save_path, custom_name+'.pth'))
+
 if __name__ == '__main__':
-    main(use_case='bridge_sections', anchor_names=['seitenansicht', 'draufsicht', 'deck'], ignore=['none', 'widerlager_west', 'widerlager_ost'])
+    # main(use_case='bridge_sections', anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'])
+    # load_and_test()
+    # bridge_sections_image_dictionarys(ignore=['none'])
+    model = load_model('BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921')
+    plot_distances(model, show=False, save_imgs_to=os.path.join('results', 'finetuned', str(random.randint(1,100000))))
