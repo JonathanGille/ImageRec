@@ -15,7 +15,7 @@ label_assignment_dictionary = {
     'Draufsicht': 5,
 }
 
-def plot_embeddings(embeddings, label=['Unlabelled'], save_to=None, show_plot=True):
+def plot_embeddings(embeddings, label=['Unlabelled'], save_to=None, show_plot=True, fix_axis=False):
     def match_colors_to_label(available_colors, existing_labels):
         label_color_dictionary = {}
         for n in range(len(existing_labels)):
@@ -76,6 +76,10 @@ def plot_embeddings(embeddings, label=['Unlabelled'], save_to=None, show_plot=Tr
     plt.title("projected embedding space")  # Titel setzen
     # plt.legend(['None','Widerlager_West','Widerlager_Ost','Deck','Seitenansicht','Draufsicht'])  # Legende anzeigen
     plt.legend(existing_labels)  # Legende anzeigen
+
+    # # !!!! doesn't work properly !!!! 
+    # if fix_axis:
+    #     plt.axis([max(embs[:,0]), min(embs[:,0]), max(embs[:,1]), min(embs[:,1])])
 
     if save_to != None:
         plt.savefig(save_to, format='png')

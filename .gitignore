@@ -1,3 +1,5 @@
 
 .venv/Lib/site-packages/torch/lib/dnnl.lib
 .venv/Lib/site-packages/torch/lib/torch_cpu.dll
+finetuned_models/BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_33002.pth
+finetuned_models/BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921.pth

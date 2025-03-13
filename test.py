@@ -1,4 +1,7 @@
-import torch
-import os
+import numpy as np
+import matplotlib.pyplot as plt
 
-torch.load(os.path.join())
+
+l1 = [1,2,-33]
+
+print(max(l1), min(l1))

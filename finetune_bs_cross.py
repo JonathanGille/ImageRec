@@ -1,6 +1,7 @@
 import os
 import random
 import time
+import numpy as np
 
 from similarity_search import image_similarity, get_images, get_embedding
 from embeddings_manager import plot_embeddings
@@ -14,7 +15,8 @@ from PIL import Image
 import torch.nn.functional as functional
 import matplotlib.pyplot as plt
 
-# Modell laden
+
+# Basis-Modell laden
 model = timm.create_model('convnext_base', pretrained=True)
 model.train()
 
@@ -90,7 +92,7 @@ class TripletLoss(nn.Module):
         return loss.mean()
     
 
-def sketchy_image_batches(anchor_name, negatives_names, num_samples=40, as_objects=False):
+def sketchy_image_batches(anchor_name, negatives_names, num_samples=40, as_objects=True):
     img_folder = 'training_data'
     anchor_folder = os.path.join(img_folder,anchor_name)
     negative_folders = [os.path.join(img_folder, neg_name) for neg_name in negatives_names]
@@ -122,11 +124,11 @@ def sketchy_image_batches(anchor_name, negatives_names, num_samples=40, as_objec
 
     return anchors, positives, negatives
 
-def generate_plot(anchors, positives, negatives, save_to=None, show_plot=True, only_apn_label=True):
+def generate_plot(anchors, positives, negatives, save_to=None, show_plot=True, only_apn_label=True, normalize=True):
     if only_apn_label:
-        all_embeddings = [generate_embedding(anch) for anch in anchors] + [generate_embedding(pos) for pos in positives]
+        all_embeddings = [anch.norm_emb.clone() for anch in anchors] + [pos.norm_emb.clone() for pos in positives]
         for stack in negatives:
-            all_embeddings = all_embeddings + [generate_embedding(neg) for neg in stack]
+            all_embeddings = all_embeddings + [neg.norm_emb for neg in stack]
     else:
         all_embeddings = [generate_embedding(anch.img) for anch in anchors] + [generate_embedding(pos.img) for pos in positives]
         for stack in negatives:
@@ -140,6 +142,11 @@ def generate_plot(anchors, positives, negatives, save_to=None, show_plot=True, o
         all_label = [str(a.label)+' (anchor)' for a in anchors] + [str(p.label)+' (pos.)' for p in positives]
         for stack in negatives:
             all_label = all_label + [n.label+' (neg.)' for n in stack]
+
+    if normalize:
+        # normalize embeddings by largest l2-norm of all embeddings
+        maxl2 = max_l2(all_embeddings)
+        all_embeddings = [emb / maxl2 for emb in all_embeddings]
 
     plot_embeddings(all_embeddings, all_label, save_to=save_to, show_plot=show_plot)
 
@@ -172,47 +179,54 @@ def test_image_batches():
     neg = [neg1, neg2]
     return anchor, pos, neg
 
-def bridge_sections_image_batches(anchor_name, ignore=None, as_objects=False):
+def bridge_sections_image_batches(anchor_name, ignore=None, as_objects=True):
     img_folder = 'bridge_sections_labelled'
     wireframes_folder = os.path.join(img_folder,'wireframes')
     scans_folder = os.path.join(img_folder,'scans')
     
     anchor_folder = os.path.join(wireframes_folder, anchor_name)
     positives_folder = os.path.join(scans_folder, anchor_name)
+    # alle folder außer dem anchor folder
     negative_parts = [p for p in os.listdir(scans_folder) if p != anchor_name]
     if ignore != None and type(ignore) == list:
+        # folder die in ignore gelistet sind ignorieren
         for ign in ignore:
             negative_parts = [p for p in negative_parts if p != ign]
     negative_folders = [os.path.join(scans_folder, p) for p in negative_parts]
-    print(negative_folders)
 
-    anchor_images = get_images(anchor_folder)
-    positive_images = get_images(positives_folder)
-    stack_of_negative_images = [get_images(neg_folder) for neg_folder in negative_folders]
+    # bilder laden (als c_image objekt) 
+    anchor_images = get_images(anchor_folder, load_image=False)
+    positive_images = get_images(positives_folder, load_image=False)
+    stack_of_negative_images = [get_images(neg_folder, load_image=False) for neg_folder in negative_folders]
+
 
     for img in anchor_images:
         img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
-        #img.emb = generate_embedding(img.img)
+        #img.emb = generate_embedding(img.img.clone())
         img.label = anchor_name
     for img in positive_images:
         img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
-        #img.emb = generate_embedding(img.img)
+        #img.emb = generate_embedding(img.img.clone())
         img.label = anchor_name
     for i in range(len(stack_of_negative_images)):
         for img in stack_of_negative_images[i]:
             img.img = load_image(img.path) # für die richtige batch-dimension lokale load-funktion verwenden
-            #img.emb = generate_embedding(img.img)
+            #img.emb = generate_embedding(img.img.clone())
             img.label = negative_parts[i]
+    print('-> ##### c_images created (anchor='+anchor_name+') #####')
 
+    # # max l2-norm aller embeddings berechnen
+    # all_images = [img for img in anchor_images] + [img for img in positive_images] + [img for stack in stack_of_negative_images for img in stack]
+    # all_embeddings = torch.stack([img.emb.clone() for img in all_images])
+    # max_l2 = torch.norm(all_embeddings, p=2, dim=1, keepdim=True).max()
+    # # embeddings mit maximaler l2-norm normalisieren (l2-norm aller embeddings auf Werte zwischen 0-1)
+    # for img in all_images:
+    #     img.norm_emb = img.emb / max_l2
+    # print('-> ##### embeddings mormalized (c_image.norm_emb) #####')
 
-    if as_objects:
-        anchors = [img for img in anchor_images] # erste hälfte von houses sind die anchor bilder
-        positives = [img for img in positive_images] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
-        negatives = [[img for img in stack] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
-    else:
-        anchors = [img.img for img in anchor_images] # erste hälfte von houses sind die anchor bilder
-        positives = [img.img for img in positive_images] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
-        negatives = [[img.img for img in stack] for stack in stack_of_negative_images] # airplanes sind die negativen (genauso lang wie die anchor bilder)
+    anchors = [c_img for c_img in anchor_images] # erste hälfte von houses sind die anchor bilder
+    positives = [c_img for c_img in positive_images] # zweites hälfte (genauso lang wie erste hälfte) von houses sind die positiven bilder
+    negatives = [[c_img for c_img in stack] for stack in stack_of_negative_images]# airplanes sind die negativen (genauso lang wie die anchor bilder)
 
     return anchors, positives, negatives
 
@@ -236,6 +250,11 @@ def load_and_test(model_name=None):
     d13 = torch.norm(emb1 - emb3, p=2)
     print(d12.item())
     print(d13.item())
+
+def max_l2(all_embeddings):
+    # max l2-norm aller embeddings berechnen
+    max_l2 = torch.norm(torch.stack(all_embeddings), p=2, dim=1, keepdim=True).max()
+    return max_l2
 
 def load_model(model_name):
     loaded_model = timm.create_model('convnext_base', pretrained=True)
@@ -292,10 +311,10 @@ def plot_distances(model, show=True, save_imgs_to=None):
             else:
                 plt.clf()
         
-def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
+def main(anchor_names, ignore=None, save_model=True):
     ### SETTINGS ###
     epochs = 100
-    margin = 120
+    margin = 1
     learning_rate = 0.001
     metric = 'l2-norm'
     loss_function = 'ContrastiveLoss'
@@ -307,6 +326,7 @@ def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
     label_only_apn = False #(in den plots werden alle kategorien farblich unterschieden und beschriftet)
     results_folder = os.path.join('finetuning_results', 'BS(cross)_'+loss_function+'_epochs='+str(epochs)+'_lr='+str(learning_rate)+'_'+str(random.randint(1,100000)))
     os.makedirs(results_folder)
+    print('creating batches...')
     apn_obj_batches = [bridge_sections_image_batches(anchor_name=anchor_name, ignore=ignore, as_objects=True) for anchor_name in anchor_names]
 
 
@@ -329,11 +349,19 @@ def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
     #     info_txt += '\n'
     
     ### TRAINING
+    print('start training...')
+    loss_log = []
+    mean_log_pos = []
+    mean_log_neg = []
     start_time = time.time()
     for epoch in range(epochs):
+        loss_mean = []
+        mlp = []
+        mln = []
         for anchor, pos, neg in apn_obj_batches:
             if epoch % 5 == 0:
                 generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'_'+anchor[0].name+'.png'), show_plot=False, only_apn_label=label_only_apn)
+                
 
             if epoch == 50:
                 learning_rate = 0.001
@@ -355,26 +383,49 @@ def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
                 pos_emb = [generate_embedding(img.img) for img in pos]
                 neg_emb = [[generate_embedding(img.img) for img in stack] for stack in neg]
 
+                # normalize embeddings bei the maximum l2-distance of all embeddings
+                all_embeddings = anchor_emb + pos_emb + [emb for stack in neg_emb for emb in stack]
+                maxl2 = max_l2(all_embeddings)
+                anchor_emb_norm = [emb / maxl2 for emb in anchor_emb]
+                pos_emb_norm = [emb / maxl2 for emb in pos_emb]
+                neg_emb_norm = [[emb / maxl2 for emb in stack] for stack in neg_emb]
+
+
                 sum_of_losses = 0
+                mean_pos_sum = 0
+                mean_neg_sum = 0
                 n = 0
-                for anch in anchor_emb:
-                    for p_emb in pos_emb:
+                n_pos = 0
+                n_neg = 0
+                for anch in anchor_emb_norm:
+                    for p_emb in pos_emb_norm:
                         s_loss = criterion(anch, p_emb, 0)
-                        sum_of_losses += s_loss
+                        sum_of_losses = sum_of_losses + s_loss
                         n += 1
-                    for neg_stack in neg_emb:
+                        l2 = torch.norm(anch-p_emb, p=2).item()
+                        mean_pos_sum += l2
+                        n_pos += 1
+                    for neg_stack in neg_emb_norm:
                         for n_emb in neg_stack:
                             s_loss = criterion(anch, n_emb, 1)
-                            sum_of_losses += s_loss
+                            sum_of_losses = sum_of_losses + s_loss
                             n += 1
+                            l2 = torch.norm(anch-n_emb, p=2).item()
+                            mean_neg_sum += l2
+                            n_neg += 1
                 loss = sum_of_losses/n
+                mlp.append(mean_pos_sum / n_pos)
+                mln.append(mean_neg_sum / n_neg)
+
 
             # NOCH NICHT FÜR STACK VON NEGATIVES AUSGELEGT -> neg[0] workaround nur für ersten stack
             elif loss_function == 'TripletLoss':
                 mdap = get_multi_l2distance(anchor, pos, elementwise=True)
                 mdan1 = get_multi_l2distance(anchor, neg[0], elementwise=True)
                 loss = criterion(mdap, mdan1)
-
+            # for the loss_log (to get the mean loss for all anchor combination)
+            loss_mean.append(loss.item())
+            # for training
             loss.backward()
             optimizer.step()
             if epoch == epochs-1:
@@ -383,6 +434,9 @@ def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
 
         print(f"Epoch {epoch+1}, Loss: {loss.item()}")
         info_txt += f"Epoch {epoch+1}, Loss: {loss.item()}\n"
+        loss_log.append(np.mean(loss_mean))
+        mean_log_pos.append(np.mean(mlp))
+        mean_log_neg.append(np.mean(mln))
 
     end_time = time.time()
     info_txt += '\t -> training-time: ' + str(round((end_time-start_time)/60,2)) + ' min.\n'
@@ -398,22 +452,41 @@ def main(use_case='sketchy', anchor_names=None, ignore=None, save=True):
     #     info_txt += '\n'
 
     # # save last plot
-    # generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False, only_apn_label=label_only_apn)
+    generate_plot(anchor, pos, neg, save_to=os.path.join(results_folder, 'epochs_'+str(epoch)+'.png'), show_plot=False, only_apn_label=label_only_apn)
 
     # save infolog
     with open(os.path.join(results_folder, 'info.txt'), "w", encoding="utf-8") as file:
         file.write(info_txt)
 
+    # save loss_log as pyplot
+    plt.plot(list(range(len(loss_log))), loss_log)
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+    plt.savefig(os.path.join(results_folder, 'loss.png'), format='png')
+    plt.clf()
+
+    # save means of positive pairs distances and negative pairs distances
+    plt.plot(list(range(len(mean_log_pos))), mean_log_pos, label='positive', color='green')
+    plt.plot(list(range(len(mean_log_pos))), mean_log_neg, label='negative', color='red')
+    plt.xlabel('epochs')
+    plt.ylabel('mean of l2-distances')
+    plt.savefig(os.path.join(results_folder, 'mean_distances.png'), format='png')
+    plt.clf()
+
     # save model
-    if save:
+    if save_model:
         model_save_path = 'finetuned_models'
         custom_name = 'BS(cross)_'+loss_function+'_epochs='+str(epochs)+'_lr='+str(learning_rate)+'_'+str(random.randint(1,100000))
         # torch.save(model, os.path.join(model_save_path, custom_name+'.pth'))
         torch.save(model.state_dict(), os.path.join(model_save_path, custom_name+'.pth'))
 
 if __name__ == '__main__':
-    # main(use_case='bridge_sections', anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'])
+    main(anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'])
     # load_and_test()
     # bridge_sections_image_dictionarys(ignore=['none'])
-    model = load_model('BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921')
-    plot_distances(model, show=False, save_imgs_to=os.path.join('results', 'finetuned', str(random.randint(1,100000))))
+    # model = load_model('BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921')
+    # plot_distances(model, show=False, save_imgs_to=os.path.join('results', 'finetuned', str(random.randint(1,100000))))
+    # a,p,n = bridge_sections_image_batches('deck')
+    # print(torch.norm(a[0].norm_emb, p=2))
+    # print(torch.norm(p[0].norm_emb, p=2))
+    # print(torch.norm(n[0][0].norm_emb, p=2))
