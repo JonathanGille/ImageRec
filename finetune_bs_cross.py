@@ -481,7 +481,7 @@ def main(anchor_names, ignore=None, save_model=True):
         torch.save(model.state_dict(), os.path.join(model_save_path, custom_name+'.pth'))
 
 if __name__ == '__main__':
-    main(anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'])
+    main(anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'], save_model=False)
     # load_and_test()
     # bridge_sections_image_dictionarys(ignore=['none'])
     # model = load_model('BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921')
