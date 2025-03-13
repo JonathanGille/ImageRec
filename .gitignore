@@ -22,3 +22,4 @@ venv/Lib/site-packages/torch/lib/torch_cuda.dll
 .venv/Lib/site-packages/torch/lib/cusolver64_11.dll
 .venv/Lib/site-packages/torch/lib/cusparse64_12.dll
 .venv/Lib/site-packages/torch/lib/torch_cuda.dll
+finetuned_models
