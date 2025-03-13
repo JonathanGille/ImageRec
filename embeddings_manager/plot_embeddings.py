@@ -41,14 +41,14 @@ def plot_embeddings(embeddings, label=['Unlabelled'], save_to=None, show_plot=Tr
         emb2d = pca.fit_transform(embeddings)
     except:
         try:
-            embeddings = [emb.detach().numpy() for emb in embeddings]
+            embeddings = [emb.detach().cpu().numpy() for emb in embeddings]
             emb2d = pca.fit_transform(embeddings)
         except:
             try:
-                embeddings = [emb.numpy()[0] for emb in embeddings]
+                embeddings = [emb.cpu().numpy()[0] for emb in embeddings]
                 emb2d = pca.fit_transform(embeddings)
             except:
-                embeddings = [emb.detach().numpy()[0] for emb in embeddings]
+                embeddings = [emb.detach().cpu().numpy()[0] for emb in embeddings]
                 emb2d = pca.fit_transform(embeddings)
     
     # embeddings nach farben(label) sortieren

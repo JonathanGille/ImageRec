@@ -313,7 +313,7 @@ def plot_distances(model, show=True, save_imgs_to=None):
         
 def main(anchor_names, ignore=None, save_model=True):
     ### SETTINGS ###
-    epochs = 100
+    epochs = 10
     margin = 1
     learning_rate = 0.001
     metric = 'l2-norm'
