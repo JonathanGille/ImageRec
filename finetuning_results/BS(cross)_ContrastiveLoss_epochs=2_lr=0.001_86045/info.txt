@@ -1,0 +1,12 @@
+### SETTINGS ###
+anchors = ['seitenansicht', 'draufsicht', 'deck', 'widerlager']
+epochs = 2
+margin = 1
+learning_rate = 0.001
+metric = l2-norm
+loss_function = ContrastiveLoss
+###
+
+Epoch 1, Loss: 0.24074096977710724
+Epoch 2, Loss: 0.20241844654083252
+	 -> training-time: 0.15 min.

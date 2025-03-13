@@ -313,7 +313,7 @@ def plot_distances(model, show=True, save_imgs_to=None):
         
 def main(anchor_names, ignore=None, save_model=True):
     ### SETTINGS ###
-    epochs = 10
+    epochs = 2
     margin = 1
     learning_rate = 0.001
     metric = 'l2-norm'
@@ -481,7 +481,7 @@ def main(anchor_names, ignore=None, save_model=True):
         torch.save(model.state_dict(), os.path.join(model_save_path, custom_name+'.pth'))
 
 if __name__ == '__main__':
-    main(anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'], save_model=False)
+    main(anchor_names=['seitenansicht', 'draufsicht', 'deck', 'widerlager'], ignore=['none'], save_model=True)
     # load_and_test()
     # bridge_sections_image_dictionarys(ignore=['none'])
     # model = load_model('BS(cross)_ContrastiveLoss_epochs=100_lr=0.001_41921')
